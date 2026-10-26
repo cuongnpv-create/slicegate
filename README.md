@@ -1,175 +1,201 @@
 # slicegate
 
-*Every slice of AI-written code passes a gate.* — mỗi lát mã do AI viết đều phải qua cổng.
+**English** · [Tiếng Việt](README.vi.md)
 
-Bộ quy trình phát triển phần mềm **có cổng duyệt (gate)** cho đội agent AI (Claude Code): lát nhỏ, gate độc lập,
-sổ phán append-only, máy gác chạy ở hook, **đột biến theo vùng rủi ro** để chứng minh test thật sự canh luật.
+*Every slice of AI-written code passes a gate.*
 
-Rút ra từ một dự án thật — nền tảng giao dịch đa sàn, nhiều agent chạy song song — rồi tách phần **cơ chế** (dùng
-chung) khỏi phần **nội dung** riêng dự án. Mọi tham số dự án nằm ở một tệp `slicegate.toml`.
+A gated development process for teams of AI coding agents (Claude Code): small slices, independent gates, an
+append-only verdict ledger, guards that run in git hooks, and **mutation testing by risk zone** to prove the tests
+actually guard the rules.
 
-> Trạng thái: `0.3.0` (trước đây tên **gatekit**) — bộ LÕI + 10 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
+It was extracted from a real project — a multi-exchange trading platform built by several agents working in parallel —
+by separating the **mechanism** (reusable) from the project-specific **content**. Every project parameter lives in one
+file: `slicegate.toml`.
 
-## Vì sao
+> Status: `0.3.0` (formerly **gatekit**) — core + 10 industry packs. Document templates, CLI and guard messages in
+> **English and Vietnamese**; identifiers in code are English.
 
-Agent AI viết mã nhanh nhưng hay mắc 4 lỗi: khai "đã xong" không có bằng chứng · test so mã với chính mã (test rỗng) ·
-hai phiên song song giẫm nhau · quy trình phình to hơn phần mã. slicegate chặn từng lỗi bằng thứ **đo được**:
+## Why
 
-| Lỗi | Cơ chế |
+AI agents write code fast, but they fail in four recurring ways. slicegate blocks each one with something **measurable**:
+
+| Failure | What slicegate does |
 |---|---|
-| Khai không bằng chứng | gói G-IN/G-OUT bắt buộc lệnh đo + toạ độ; gate nhận diff, ⛔ nhận kết luận |
-| Test rỗng | đột biến trên bản sao theo vùng rủi ro T/K/F; `test_wiring` bắt test không ai chạy |
-| Giẫm nhau | phiên điều phối là người ghi sổ duy nhất; cấp dải số trước; mỗi lát một worktree; commit xếp hàng |
-| Quy trình phình | "điều kiện có răng" (mỗi điều kiện phải nêu khuyết tật mã nó chặn) · `quota` tỷ lệ lát quản trị : lát mã · cuộn sổ |
+| "Done" claimed without evidence | G-IN / G-OUT packets require the measuring command + file coordinates; gates review the diff, never a conclusion |
+| Hollow tests (code tested against itself) | mutants run on a copy, chosen by risk zone T/K/F; `test_wiring` catches tests nothing runs |
+| Parallel sessions stepping on each other | one coordinator session is the only ledger writer; id ranges reserved up front; one worktree per slice; commits queue |
+| Process growing bigger than the code | "conditions with teeth" (every condition must name the code defect it blocks) · `quota` on governance-vs-code slices · ledger rolling |
 
-## Cài và dựng
+## What it looks like
 
-### Cách 1 — plugin Claude Code (khuyên dùng)
+An agent writes a pallet quote with a bare `weight` and a cut-off built from `datetime.utcnow()`:
+
+```python
+def quote(weight, distance_km):
+    cutoff = datetime.utcnow().replace(hour=10, minute=0)
+    total_weight = weight * 1.1
+    return cutoff, total_weight * distance_km
+```
+
+The pre-commit hook (logistics pack) blocks the commit:
+
+```
+$ git commit -m "feat(rating): pallet pricing [S-14]"
+🔴 naive_time — 1 violation(s) (blocks: timestamps without a time zone ⇒ cut-offs, SLAs and ETAs shift by the server's time zone)
+   [naive_time] src/shipping/pallet.py:5 — `datetime.utcnow()` creates a timestamp without a time zone — pass `timezone.utc` / `tzinfo=`
+🔴 unit_suffix — 2 violation(s) (blocks: quantities without units ⇒ kg/lb, km/mi, °C/°F get mixed: wrong rates, overloaded vehicles, spoiled cold chain)
+   [unit_suffix] src/shipping/pallet.py:4 — quantity `weight` carries no unit in its name (e.g. `_kg`, `_km`, `_cbm`, `_c`) ∨ `units: ignore <reason>`
+   [unit_suffix] src/shipping/pallet.py:6 — quantity `total_weight` carries no unit in its name (e.g. `_kg`, `_km`, `_cbm`, `_c`) ∨ `units: ignore <reason>`
+pre-commit: 🔴 slicegate check --fast RED
+```
+
+Every guard states the **code defect** it blocks, and every guard ships with negative-case self-tests.
+
+## Install
+
+### Option 1 — Claude Code plugin (recommended)
 
 ```
 /plugin marketplace add cuongnpv-create/slicegate
 /plugin install slicegate@slicegate
 ```
-Claude Code 2.1.275 trở lên cài được một bước: `/plugin install slicegate --marketplace cuongnpv-create/slicegate`
-(ngoài phiên: `claude plugin marketplace add cuongnpv-create/slicegate && claude plugin install slicegate@slicegate`).
-Repo private ⇒ máy cài phải có quyền đọc repo trên GitHub.
+Outside a session: `claude plugin marketplace add cuongnpv-create/slicegate && claude plugin install slicegate@slicegate`.
 
-Plugin mang theo:
+The plugin brings:
 
-| Thành phần | Dùng |
+| Component | Use |
 |---|---|
-| `/slicegate:init` | hỏi mức, gói, ngôn ngữ, làn ⇒ chạy `slicegate init` ⇒ tự điền `CLAUDE.md`, `[zones]`, manifest test từ mã thật ⇒ `check --full` xanh |
-| `/slicegate:check` | chạy mọi guard, sửa từng chỗ đỏ ngay trong mã (⛔ nới guard) |
-| `/slicegate:gate G-IN\|G-OUT\|G-DECIDE <lát>` | đo · cấp số · chọn gate · gửi gói · ghi phán vào sổ |
-| `/slicegate:coordinator` | mở phiên điều phối theo `SESSION_PROTOCOL` |
-| lệnh `slicegate` | có sẵn trên PATH của Bash trong Claude Code — ⛔ cần pip (chỉ cần Python ≥ 3.11) |
-| hook `SessionStart` | in tóm tắt trạng thái khi mở phiên trong dự án đã cài slicegate |
+| `/slicegate:init` | asks for level, packs, languages, lanes ⇒ runs `slicegate init` ⇒ fills `CLAUDE.md`, `[zones]` and the test manifest from your real code ⇒ `check --full` GREEN |
+| `/slicegate:check` | runs every guard and fixes each RED in the code (never by loosening the guard) |
+| `/slicegate:gate G-IN\|G-OUT\|G-DECIDE <slice>` | measure · allocate an id · pick the gate · send the packet · record the verdict |
+| `/slicegate:coordinator` | opens a coordinator session per `SESSION_PROTOCOL` |
+| `slicegate` command | on Bash's PATH inside Claude Code — no pip needed (Python ≥ 3.11 only) |
+| `SessionStart` hook | prints a status summary when a session opens in a project that uses slicegate |
 
-`slicegate hooks install` chạy từ plugin ghi đường dẫn lệnh vào git hook, nên `pre-commit` / `pre-push` vẫn chạy được
-khi commit ngoài Claude Code. Cập nhật plugin xong (đường dẫn đổi) thì chạy lại `slicegate hooks install`.
-Lưu ý: claude.ai và Cowork không cài plugin có thư mục `bin/` — plugin này dành cho Claude Code.
+`slicegate hooks install` run from the plugin writes the command's path into the git hooks, so `pre-commit` /
+`pre-push` also work for commits made outside Claude Code. After a plugin update (the path changes), run
+`slicegate hooks install` again. Note: claude.ai and Cowork do not install plugins with a `bin/` directory — this plugin
+is for Claude Code.
 
-### Cách 2 — gói pip
+### Option 2 — pip
 
 ```bash
-pip install git+https://github.com/cuongnpv-create/slicegate        # hoặc: pip install -e . trong bản sao repo
-cd du-an-cua-ban && git init        # nếu chưa là repo
-slicegate init --name "MyApp" --level standard --pack i18n --pack postgres
+pip install git+https://github.com/cuongnpv-create/slicegate      # or: pip install -e . in a clone
+cd your-project && git init                                         # if it is not a repo yet
+slicegate init --name "MyApp" --language en --level standard --pack i18n --pack postgres
 slicegate hooks install
 slicegate check --full
 ```
 
-Dự án tiếng Anh: `slicegate init --name "MyApp" --language en` (hoặc giữ agent nói tiếng Việt nhưng tài liệu tiếng Anh:
-`--language vi --docs-language en`).
+Agents talking in another language but documents in English: `--language ja --docs-language en`.
 
-Sau `init`: điền `CLAUDE.md §1/§2/§7`, khai `[zones]` trong `slicegate.toml` theo mã thật, rồi mở phiên điều phối bằng
-`docs/governance/COORDINATOR_PROMPT.md`.
+After `init`: fill in `CLAUDE.md §1/§2/§7`, declare `[zones]` in `slicegate.toml` from your real code, then open a
+coordinator session with `docs/governance/COORDINATOR_PROMPT.md`.
 
-## Ngôn ngữ
+## Levels
 
-| Tham số | Nghĩa |
-|---|---|
-| `project.language` | ngôn ngữ agent giao tiếp (bất kỳ, vd `vi`, `en`, `ja`) |
-| `project.docs_language` | ngôn ngữ bộ mẫu tài liệu: `vi` · `en`; để trống = theo `language` nếu có mẫu, ngược lại `en` |
-
-Thông báo của dòng lệnh, guard và công cụ dùng cùng ngôn ngữ ấy (`src/slicegate/messages.py`); ghi đè một lần chạy bằng
-biến môi trường `SLICEGATE_LANG=vi|en`.
-
-Bộ mẫu nằm ở `templates/<vi|en>/` và `packs/<gói>/<vi|en>/`. Test `test_template_parity` và `test_messages` bắt buộc
-hai ngôn ngữ song song: cùng tập tệp / khoá, cùng chỗ giữ / tham số, bản `en` không sót tiếng Việt.
-
-## Mức dùng
-
-| Mức | Agent | Sổ phán | Hợp |
+| Level | Agents | Verdict ledger | Fits |
 |---|---|---|---|
-| `lite` | chief-architect · qa-lead | — (chỉ STATUS + CHANGELOG) | app nhỏ, 1 người |
-| `standard` | + security-lead · ux-gate · product-director · design-director | theo làn | đội, nhiều agent song song |
-| `regulated` | + compliance-officer | theo làn | tài chính, y tế, dữ liệu nhạy cảm |
+| `lite` | chief-architect · qa-lead | — (STATUS + CHANGELOG only) | small app, one person |
+| `standard` | + security-lead · ux-gate · product-director · design-director | per lane | teams, several agents in parallel |
+| `regulated` | + compliance-officer | per lane | finance, health, sensitive data |
 
-## Gói ngành
+## Industry packs
 
-| Gói | Thêm |
+| Pack | Adds |
 |---|---|
-| `i18n` | guard `locale_parity` (catalog đủ, khớp khoá, khớp tham số) · Điều "bản địa hoá từ đầu" |
-| `multi_provider` | guard `provider_name_scope`, `partition_key_scope` · Điều "nhà cung cấp tường minh", "ý định → định tuyến → bộ dịch", "chưa biết ≠ không" |
-| `legacy_upgrade` | guard `legacy_import_ban` · `LEGACY_UPGRADE_GUIDE.md` (nhãn CHÉP/NÂNG/REPLACE/MỚI, ghi nguồn, test chụp hành vi) |
-| `postgres` | guard `migration_scope` (ghim sha, số liên tục) · `slicegate migrations lock` |
-| `fintech` | agent `execution-lead` (vùng T), `quant-lead` (vùng F), `domain-auditor` |
+| `i18n` | guard `locale_parity` (complete catalogs, matching keys and parameters) · article "localized from day one" |
+| `multi_provider` | guards `provider_name_scope`, `partition_key_scope` · articles "the provider is explicit", "intent → route → translate", "unknown is not no" |
+| `legacy_upgrade` | guard `legacy_import_ban` · `LEGACY_UPGRADE_GUIDE.md` (COPY / UPGRADE / REPLACE / NEW labels, source labels, behaviour-capture tests) |
+| `postgres` | guard `migration_scope` (pinned sha, contiguous numbering) · `slicegate migrations lock` |
+| `fintech` | agents `execution-lead` (zone T), `quant-lead` (zone F), `domain-auditor` |
 | `data_pipeline` | agent `data-integrity` |
-| `ecommerce` | guard `money_float` (tiền ⛔ float — Python, SQL, `parseFloat`), `pci_scope` (⛔ lưu số thẻ / CVV) · agent `checkout-lead` (vùng T: đơn, thanh toán, webhook, hoàn tiền, tồn kho), `pricing-lead` (vùng F: giá, khuyến mãi, thuế, làm tròn) · `ECOMMERCE_GUIDE.md` (vùng gợi ý, luật cứng, bộ đột biến mẫu) · Điều 12 "Tiền là chính xác" |
-| `saas_multitenant` | guard `tenant_scope` (bảng có cột tenant; mọi câu SQL trong mã chạm bảng tenant phải lọc tenant — Python, JS/TS, Go, Java…, tệp `.sql`), `tenant_rls` (bật `require_rls`: bảng tenant phải bật Row Level Security + có policy) · agent `tenancy-lead` (vùng K: ngữ cảnh tenant, cache, job, đăng nhập hộ, xuất/xoá dữ liệu), `billing-lead` (vùng T/F: đăng ký, pro-rata, đo lượng dùng, giới hạn gói) · `SAAS_GUIDE.md` (mô hình cách ly, vùng gợi ý, test chéo tenant, bộ đột biến mẫu) · Điều 13 "Khách thuê là tường minh" |
-| `healthcare` | guard `phi_log` (dữ liệu sức khoẻ ⛔ vào print / log / raise / analytics / công cụ bắt lỗi — Python, JS/TS), `phi_tag` (cột SQL chứa dữ liệu sức khoẻ phải khai `-- phi` ⇒ bản đồ dữ liệu) · agent `privacy-lead` (vùng K: quyền xem tối thiểu, nhật ký mọi lần đọc, truy cập khẩn cấp, đồng ý, khử định danh), `clinical-safety-lead` (vùng F: liều, đơn vị, khoảng tham chiếu, cảnh báo) · `HEALTHCARE_GUIDE.md` · Điều 14 "Dữ liệu sức khoẻ là tối thiểu và có dấu vết" |
-| `logistics` | guard `unit_suffix` (tên đại lượng — weight, distance, volume, temperature… — phải mang đơn vị: `weight_kg`, `distanceKm`, `temp_c` — Python, JS/TS, SQL), `naive_time` (mốc thời gian ⛔ ngây thơ: `datetime.utcnow()`, `now()` không tz, SQL `timestamp`, JS `new Date("… hh:mm")`) · agent `fulfillment-lead` (vùng T: đặt chỗ hãng, nhãn, máy trạng thái chuyến hàng, webhook, tồn kho, COD), `routing-lead` (vùng F: cước, trọng lượng quy đổi, ETA, giờ cắt, SLA) · `LOGISTICS_GUIDE.md` · Điều 15 "Đại lượng và thời gian không mơ hồ" |
+| `ecommerce` | guards `money_float` (no floating-point money — Python, SQL, `parseFloat`), `pci_scope` (never store card numbers / CVV) · agents `checkout-lead` (zone T: orders, payments, webhooks, refunds, stock), `pricing-lead` (zone F: prices, promotions, tax, rounding) · `ECOMMERCE_GUIDE.md` · Article 12 "Money is exact" |
+| `saas_multitenant` | guards `tenant_scope` (tenant tables carry the tenant column; every SQL statement in code that touches one filters by tenant — Python, JS/TS, Go, Java…, `.sql` files), `tenant_rls` (with `require_rls`: tenant tables enable Row Level Security and have a policy) · agents `tenancy-lead` (zone K), `billing-lead` (zone T/F) · `SAAS_GUIDE.md` · Article 13 "The tenant is explicit" |
+| `healthcare` | guards `phi_log` (no health data in print / log / raise / analytics / error trackers — Python, JS/TS), `phi_tag` (SQL health-data columns carry a `-- phi` tag ⇒ a data map) · agents `privacy-lead` (zone K), `clinical-safety-lead` (zone F) · `HEALTHCARE_GUIDE.md` · Article 14 "Health data is minimal and traceable" |
+| `logistics` | guards `unit_suffix` (quantity names carry their unit: `weight_kg`, `distanceKm`, `temp_c` — Python, JS/TS, SQL), `naive_time` (no naive timestamps: `datetime.utcnow()`, `now()` without tz, SQL `timestamp`, JS `new Date("… hh:mm")`) · agents `fulfillment-lead` (zone T), `routing-lead` (zone F) · `LOGISTICS_GUIDE.md` · Article 15 "Quantities and times are unambiguous" |
 
-## Lệnh
+## Commands
 
 ```
-slicegate init        dựng quy trình vào repo (⛔ ghi đè tệp đã có trừ --force)
-slicegate check       guard đang bật · --fast (pre-commit) · --full (+ neo đột biến + số sổ trùng)
-slicegate selftest    ca âm/dương của mọi guard (--all: cả gói chưa bật)
-slicegate zone        vùng rủi ro của diff + hình thức kiểm bắt buộc; tệp T/K thiếu bộ đột biến thường trực ⇒ ĐỎ
-slicegate mutants     anchors · plan · run [--changed BASE]   (MUT_ONLY=id,… để chọn)
-slicegate ledger      alloc (cấp dải số) · check (trùng) · open (điều kiện OPEN) · roll (cuộn sổ)
-slicegate debt        nợ thiếu cột / quá hạn
-slicegate quota       tỷ lệ lát quản trị : lát mã
-slicegate hygiene     report · record — guard nào bắt được gì, lớp lỗi nào đủ 3 lần để đẻ guard
-slicegate report      tổng hợp (hook SessionStart dùng bản --brief)
-slicegate migrate     chuyển dự án cài từ thời tên gatekit (xem dưới)
+slicegate init        set the process up in a repo (never overwrites existing files without --force)
+slicegate check       enabled guards · --fast (pre-commit) · --full (+ mutant anchors + duplicate ledger ids)
+slicegate selftest    negative / positive cases of every guard (--all: packs not enabled too)
+slicegate zone        risk zone of a diff + the testing it requires; T/K files without a standing mutant suite ⇒ RED
+slicegate mutants     anchors · plan · run [--changed BASE]   (MUT_ONLY=id,… to pick)
+slicegate ledger      alloc (reserve an id range) · check (duplicates) · open (OPEN conditions) · roll
+slicegate debt        debt entries missing columns / overdue
+slicegate quota       ratio of governance slices to code slices
+slicegate hygiene     report · record — what each guard caught, which defect class has fired 3 times (enough for a new guard)
+slicegate report      summary (the SessionStart hook uses --brief)
+slicegate migrate     move a project set up under the old name gatekit (see below)
 ```
 
-## Chuyển từ gatekit
+## Languages
 
-Công cụ này trước bản `0.3.0` tên là **gatekit**. Dự án đã cài vẫn chạy: `gatekit.toml` và thư mục `.gatekit/` vẫn được
-đọc (kèm lời nhắc), lệnh `gatekit` vẫn có khi cài qua pip (kèm lời nhắc), `GATEKIT_LANG` vẫn được nhận. Chuyển hẳn một
-lần:
+| Setting | Meaning |
+|---|---|
+| `project.language` | the language agents talk in (any, e.g. `en`, `vi`, `ja`) |
+| `project.docs_language` | language of the document templates: `en` · `vi`; empty = follow `language` when a template set exists, else `en` |
+
+CLI, guard and tool messages use the same language (`src/slicegate/messages.py`); override one run with
+`SLICEGATE_LANG=en|vi`. Tests `test_template_parity` and `test_messages` keep both languages in lockstep: same files and
+keys, same placeholders and parameters, no Vietnamese left in the `en` set.
+
+## Migrating from gatekit
+
+Before `0.3.0` this tool was called **gatekit**. Projects set up under that name keep working: `gatekit.toml` and the
+`.gatekit/` directory are still read (with a reminder), the `gatekit` command still exists when installed with pip (with a
+reminder), and `GATEKIT_LANG` is still honoured. To move for good:
 
 ```bash
-slicegate migrate     # git mv gatekit.toml → slicegate.toml, .gatekit/ → .slicegate/, viết lại hook, cài lại git hook
-git commit -m "chore: chuyển gatekit → slicegate"
+slicegate migrate     # git mv gatekit.toml → slicegate.toml, .gatekit/ → .slicegate/, rewrite hooks, reinstall git hooks
+git commit -m "chore: migrate gatekit → slicegate"
 ```
 
-Lệnh `gatekit` và việc đọc tên cũ sẽ bị gỡ ở một bản sau.
+The `gatekit` command and reading the old names will be removed in a later release.
 
-## slicegate tự gác chính nó
+## slicegate guards itself
 
-Repo này chạy chính slicegate (`slicegate.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`slicegate check --full` XANH · 271 test pytest · **25/25 đột biến bị giết** trên các guard và luật quyết định
-(vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
+This repo runs slicegate on itself (`slicegate.toml` at level lite, `tests/manifest.tsv`, `mutants/`):
+`slicegate check --full` GREEN · 271 pytest tests · **25/25 mutants killed** on the guards and the decision rules
+(risk zones, slice quota, ledger id allocation, ledger rolling, the mutant runner).
 
-Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về
-checkout gốc, nên đột biến không có tác dụng. Lỗi ấy giờ được `slicegate mutants run` cảnh báo khi mọi đột biến đều sống.
+When this mutant suite was first built, the first run reported 11/11 "survived": the test command in the copy imported
+the `pip -e` package, which pointed back at the original checkout, so the mutants had no effect. `slicegate mutants run`
+now warns when every mutant survives.
 
-## Ca thử nghiệm
+## Case study
 
-[`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) — cài lên `pallets/itsdangerous`: 6 đột biến vùng
-K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi vòng thử khoá bị gỡ một nửa); 3 chỗ vướng
-của slicegate tìm được và sửa ngay (lượt `check` đầu từ 12 ĐỎ oan xuống 0).
+[`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) (in Vietnamese) — slicegate set up on
+`pallets/itsdangerous`: 6 zone-K mutants exposed a real test gap in key rotation (all 297 tests stayed green with half of
+the key-trial loop removed); 3 slicegate rough edges found and fixed on the spot (first `check` went from 12 false REDs to 0).
 
-## Cấu trúc
+## Layout
 
 ```
-.claude-plugin/        plugin.json · marketplace.json · icon.png (repo vừa là plugin vừa là marketplace)
-bin/slicegate            lệnh của plugin (chạy src/ trực tiếp)
+.claude-plugin/        plugin.json · marketplace.json · icon.png (the repo is both the plugin and its marketplace)
+bin/slicegate          the plugin's command (runs src/ directly)
 skills/                /slicegate:init · check · gate · coordinator
-hooks/                 SessionStart của plugin
+hooks/                 the plugin's SessionStart hook
 src/slicegate/
-  config.py            slicegate.toml → mặc định + kiểm hợp lệ
-  messages.py          catalog thông báo vi · en, một hàm t()
-  guards/              máy gác (lõi + gói), mỗi guard: check() · selftest() · DEFECT
+  config.py            slicegate.toml → defaults + validation
+  messages.py          message catalog en · vi, one t() function
+  guards/              guards (core + packs); each has check() · selftest() · DEFECT
   tools/               ledger · debt · slice_quota · risk_zone · guard_hygiene
-  qa/mutants.py        đột biến trên bản sao, chọn theo diff, kiểm neo
-  scaffold.py          slicegate init (mẫu {{KEY}}, {{#level …}}, {{#pack …}})
-  templates/<vi|en>/   CLAUDE.md · governance/ · ledger theo làn · agent lõi · hook
-  packs/<gói>/<vi|en>/ agent + tài liệu của gói ngành
+  qa/mutants.py        mutants on a copy, selected by diff, anchor checks
+  scaffold.py          slicegate init / migrate (templates with {{KEY}}, {{#level …}}, {{#pack …}})
+  templates/<vi|en>/   CLAUDE.md · governance/ · per-lane ledgers · core agents · hooks
+  packs/<pack>/<vi|en>/ agents + documents of each industry pack
 tests/                 pytest
-mutants/               bộ đột biến của chính slicegate
+mutants/               slicegate's own mutant suites
 ```
 
-## Lộ trình
+## Roadmap
 
-- Thêm gói: `mobile`.
-- Bảng điều khiển đọc sổ phán / điều kiện OPEN / nhật ký guard.
+- More packs: `mobile`.
+- A dashboard over verdict ledgers, OPEN conditions and the guard catch log.
 
-## Giấy phép
+## License
 
-Chưa chọn — mặc định giữ toàn quyền tác giả.
+Not chosen yet — all rights reserved by the author for now.
