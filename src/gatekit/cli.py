@@ -14,7 +14,7 @@
   gatekit migrations lock                 ghim migration mới (gói postgres)
   gatekit hooks install                   cài pre-commit / pre-push vào .git/hooks
   gatekit report [--brief]                tổng hợp: nợ, điều kiện OPEN, tỷ lệ lát
-Mã thoát: 0 XANH · 1 ĐỎ · 2 lỗi dùng lệnh.
+Mã thoát: 0 XANH · 1 ĐỎ · 2 lỗi dùng lệnh. Thông báo theo ngôn ngữ dự án (`messages.py`; ghi đè: GATEKIT_LANG=vi|en).
 """
 from __future__ import annotations
 
@@ -27,6 +27,7 @@ from pathlib import Path
 
 from gatekit import __version__
 from gatekit.config import ConfigError, load
+from gatekit.messages import lang_for, pick, set_lang, t
 
 
 def _p(*a: object) -> None:
@@ -39,7 +40,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     for spec in args.lane or ["core:P"]:
         name, _, prefix = spec.partition(":")
         if not name or not prefix:
-            _p(f"--lane phải dạng name:PREFIX (nhận {spec!r})")
+            _p(t("cli.lane_format", spec=spec))
             return 2
         lanes.append((name, prefix))
     root = Path(args.root)
@@ -49,8 +50,8 @@ def cmd_init(args: argparse.Namespace) -> int:
     for w in written:
         _p(f"  + {w}")
     for s in skipped:
-        _p(f"  = {s} (đã có, bỏ qua)")
-    _p(f"gatekit init: {len(written)} tệp mới, {len(skipped)} bỏ qua. Kế: điền CLAUDE.md §1/§2/§7, khai [zones], `gatekit hooks install`.")
+        _p(t("cli.init_skipped", path=s))
+    _p(t("cli.init_done", written=len(written), skipped=len(skipped)))
     return 0
 
 
@@ -61,16 +62,16 @@ def _run_guards(cfg, *, fast: bool) -> int:
         try:
             found = g.check(cfg)
         except Exception:  # fail-closed
-            _p(f"🔴 {g.NAME}: guard lỗi khi chạy\n{traceback.format_exc()}")
+            _p(t("cli.guard_crashed", name=g.NAME) + "\n" + traceback.format_exc())
             red += 1
             continue
         if found:
             red += 1
-            _p(f"🔴 {g.NAME} — {len(found)} vi phạm (chặn: {g.DEFECT})")
+            _p(t("cli.guard_red", name=g.NAME, n=len(found), defect=pick(g.DEFECT)))
             for f in found[:50]:
                 _p(f"   {f}")
             if len(found) > 50:
-                _p(f"   … còn {len(found) - 50}")
+                _p(t("cli.more", n=len(found) - 50))
         else:
             _p(f"🟢 {g.NAME}")
     return red
@@ -115,17 +116,17 @@ def cmd_selftest(args: argparse.Namespace) -> int:
 
 def cmd_zone(args: argparse.Namespace) -> int:
     from gatekit.qa.mutants import load_suites
-    from gatekit.tools.risk_zone import REQUIREMENTS, classify
+    from gatekit.tools.risk_zone import OTHER, classify, requirement
     cfg = load(args.root)
     rep = classify(cfg, args.base, args.rev)
-    _p(f"Vùng nặng nhất: {rep.heaviest}")
+    _p(t("cli.zone_heaviest", zone=t("zone.other") if rep.heaviest == OTHER else rep.heaviest))
     for z in ("T", "K", "F"):
         for f in rep.files.get(z, []):
             _p(f"  {z}  {f}")
         for h in rep.grep_hits.get(z, []):
-            _p(f"  {z}  (nội dung) {h}")
+            _p(f"  {z}  {t('cli.zone_content')} {h}")
     for z in rep.zones():
-        _p(f"Bắt buộc [{z}]: {REQUIREMENTS[z]}")
+        _p(t("cli.zone_required", zone=t("zone.other") if z == OTHER else z, req=requirement(z)))
     # T/K: mỗi tệp trong vùng phải có bộ đột biến THƯỜNG TRỰC canh nó
     import fnmatch
     suites = load_suites(cfg)
@@ -134,11 +135,11 @@ def cmd_zone(args: argparse.Namespace) -> int:
         for f in rep.files.get(z, []):
             if not (cfg.root / f).exists():
                 continue
-            if not any(s.zone in ("T", "K") and any(fnmatch.fnmatchcase(f, t) or f == t
-                                                     for m in s.mutants for t in m.targets) for s in suites):
+            if not any(s.zone in ("T", "K") and any(fnmatch.fnmatchcase(f, tgt) or f == tgt
+                                                     for m in s.mutants for tgt in m.targets) for s in suites):
                 missing.append(f"{z}  {f}")
     if missing:
-        _p("🔴 tệp vùng T/K chưa có bộ đột biến thường trực canh:")
+        _p(t("cli.zone_missing_suite"))
         for x in missing:
             _p(f"   {x}")
         return 1
@@ -150,7 +151,7 @@ def cmd_ledger(args: argparse.Namespace) -> int:
     cfg = load(args.root)
     if args.action == "alloc":
         if not (args.lane and args.kind and args.count and args.owner):
-            _p("alloc cần --lane --kind --count --owner")
+            _p(t("cli.alloc_args"))
             return 2
         a, b = ledger.alloc(cfg, args.lane, args.kind, args.count, args.owner, args.note or "")
         prefix = next(x["prefix"] for x in cfg.lanes() if x["name"] == args.lane)
@@ -161,7 +162,7 @@ def cmd_ledger(args: argparse.Namespace) -> int:
         for x in d:
             _p(f"🔴 {x}")
         if not d:
-            _p("🟢 số sổ duy nhất")
+            _p(t("cli.ledger_unique"))
         return 1 if d else 0
     if args.action == "open":
         n = 0
@@ -169,14 +170,14 @@ def cmd_ledger(args: argparse.Namespace) -> int:
             for c in ledger.open_conditions(cfg, ln["name"]):
                 _p(f"[{ln['name']}] {c}")
                 n += 1
-        _p(f"{n} điều kiện OPEN")
+        _p(t("cli.open_count", n=n))
         return 0
     if args.action == "roll":
         if not args.lane:
-            _p("roll cần --lane")
+            _p(t("cli.roll_args"))
             return 2
         ids = ledger.roll(cfg, args.lane, dry_run=args.dry_run)
-        _p(("(thử) " if args.dry_run else "") + f"cuộn {len(ids)} entry: {', '.join(ids) or '—'}")
+        _p(t("cli.roll_done", dry=t("cli.dry_run") if args.dry_run else "", n=len(ids), ids=", ".join(ids) or "—"))
         return 0
     return 2
 
@@ -187,7 +188,7 @@ def cmd_debt(args: argparse.Namespace) -> int:
     for x in probs:
         _p(f"🔴 {x}")
     if not probs:
-        _p("🟢 nợ: đủ cột, chưa quá hạn")
+        _p(t("cli.debt_ok"))
     return 1 if probs and args.strict else 0
 
 
@@ -196,12 +197,12 @@ def cmd_quota(args: argparse.Namespace) -> int:
     cfg = load(args.root)
     seq = slices(cfg, args.since)
     for s in seq[-args.last:]:
-        _p(f"  {s.kind:<9} {s.id}  ({len(s.commits)} commit){'  [miễn]' if s.exempt else ''}")
+        _p(f"  {s.kind:<10} {s.id}  ({len(s.commits)} commit)" + (f"  {t('cli.exempt')}" if s.exempt else ""))
     v = violations(cfg, seq)
     for x in v:
         _p(f"🔴 {x}")
     if not v:
-        _p("🟢 tỷ lệ lát đạt")
+        _p(t("cli.quota_ok"))
     return 1 if v else 0
 
 
@@ -211,7 +212,7 @@ def cmd_hygiene(args: argparse.Namespace) -> int:
     cfg = load(args.root)
     if args.action == "record":
         gh.record(cfg, args.kind, args.subject, args.source, args.description)
-        _p("đã ghi")
+        _p(t("cli.recorded"))
         return 0
     _p(gh.report(cfg, [g.NAME for g in all_guards()]))
     return 0
@@ -227,7 +228,7 @@ def cmd_mutants(args: argparse.Namespace) -> int:
         for x in probs:
             _p(f"🔴 {x}")
         if not probs:
-            _p(f"🟢 neo đột biến: {sum(len(s.mutants) for s in suites)} đột biến, {len(suites)} bộ")
+            _p(t("cli.anchors_ok", mutants=sum(len(s.mutants) for s in suites), suites=len(suites)))
         return 1 if probs else 0
     only = [x.strip() for x in os.environ.get("MUT_ONLY", "").split(",") if x.strip()] or None
     files = changed(cfg, args.changed)[0] if args.changed else None
@@ -235,29 +236,28 @@ def cmd_mutants(args: argparse.Namespace) -> int:
     if args.action == "plan":
         for m in picked:
             _p(f"  {m.id:<20} {m.suite}  {m.why}")
-        _p(f"{len(picked)} đột biến được chọn" + ("" if files is not None or only else " (ĐỦ)"))
+        _p(t("cli.plan_count", n=len(picked), full="" if files is not None or only else t("cli.plan_full")))
         return 0
     if not picked:
-        _p("không có đột biến nào bị ảnh hưởng")
+        _p(t("cli.no_mutants"))
         return 0
     res = mq.run(cfg, picked, log=_p)
     bad = [r for r in res if r.status != "KILLED"]
     total = sum(r.seconds for r in res)
-    _p(f"{len(res) - len(bad)}/{len(res)} bị giết · {total:.1f}s")
+    _p(t("cli.mut_summary", killed=len(res) - len(bad), total=len(res), secs=total))
     if total > cfg["tests"]["budget"]["mutants_total_seconds"]:
-        _p(f"⚠ ngân sách: tổng {total:.0f}s > {cfg['tests']['budget']['mutants_total_seconds']}s")
+        _p(t("cli.mut_budget", total=total, limit=cfg["tests"]["budget"]["mutants_total_seconds"]))
     for r in bad:
         _p(f"🔴 {r.status}: {r.mutant.id} ({r.mutant.suite}) — {r.mutant.why}")
     if res and all(r.status == "SURVIVED" for r in res):
-        _p("⚠ MỌI đột biến đều SỐNG — kiểm lệnh có chạy mã của BẢN SAO không (gói cài `pip -e` / đường dẫn tuyệt đối trỏ "
-           "về checkout gốc ⇒ đột biến không có tác dụng). Python: thêm `PYTHONPATH=src` vào cmd.")
+        _p(t("cli.all_survived"))
     return 1 if bad else 0
 
 
 def cmd_migrations(args: argparse.Namespace) -> int:
     from gatekit.guards.migration_scope import write_lock
     added = write_lock(load(args.root))
-    _p(f"ghim {len(added)} migration mới: {', '.join(added) or '—'}")
+    _p(t("cli.migrations_locked", n=len(added), names=", ".join(added) or "—"))
     return 0
 
 
@@ -266,15 +266,15 @@ def cmd_hooks(args: argparse.Namespace) -> int:
     src = root / ".gatekit" / "hooks"
     dst = root / ".git" / "hooks"
     if not dst.is_dir():
-        _p("không thấy .git/hooks — chạy trong gốc repo git")
+        _p(t("cli.no_git_hooks"))
         return 2
     for name in ("pre-commit", "pre-push"):
         if not (src / name).exists():
-            _p(f"thiếu {src / name} — chạy gatekit init")
+            _p(t("cli.missing_hook", path=src / name))
             return 2
         shutil.copy2(src / name, dst / name)
         (dst / name).chmod(0o755)
-        _p(f"  cài {name}")
+        _p(t("cli.hook_installed", name=name))
     return 0
 
 
@@ -289,11 +289,11 @@ def cmd_report(args: argparse.Namespace) -> int:
     try:
         from gatekit.tools.slice_quota import slices, violations
         v = violations(cfg, slices(cfg))
-        quota = "🟢 đạt" if not v else f"🔴 {len(v)} vi phạm"
+        quota = t("cli.quota_pass") if not v else t("cli.quota_fail", n=len(v))
     except Exception:
         pass
-    _p(f"── 📋 gatekit · {cfg['project']['name']} · mức {cfg.level} ──")
-    _p(f"   điều kiện OPEN: {len(opens)} · nợ có vấn đề: {len(probs)} · số sổ trùng: {len(dups)} · tỷ lệ lát: {quota}")
+    _p(t("cli.report_header", name=cfg["project"]["name"], level=cfg.level))
+    _p(t("cli.report_line", opens=len(opens), debt=len(probs), dups=len(dups), quota=quota))
     if not args.brief:
         for lane, c in opens:
             _p(f"   [{lane}] {c}")
@@ -303,9 +303,9 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(prog="gatekit", description="Quy trình có cổng duyệt cho đội agent AI.")
+    ap = argparse.ArgumentParser(prog="gatekit", description=t("cli.desc"))
     ap.add_argument("--version", action="version", version=f"gatekit {__version__}")
-    ap.add_argument("--root", default=".", help="gốc repo (mặc định thư mục hiện tại)")
+    ap.add_argument("--root", default=".", help=t("cli.help_root"))
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("init")
@@ -313,10 +313,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--level", default="standard", choices=["lite", "standard", "regulated"])
     p.add_argument("--pack", action="append", choices=["i18n", "multi_provider", "legacy_upgrade", "postgres",
                                                        "fintech", "data_pipeline"])
-    p.add_argument("--lane", action="append", help="name:PREFIX, lặp lại cho nhiều làn (làn đầu = sổ chung)")
-    p.add_argument("--language", default="vi", help="ngôn ngữ agent giao tiếp")
+    p.add_argument("--lane", action="append", help=t("cli.help_lane"))
+    p.add_argument("--language", default="vi", help=t("cli.help_language"))
     p.add_argument("--docs-language", default="", choices=["", "vi", "en"],
-                   help="ngôn ngữ bộ mẫu tài liệu (mặc định: theo --language nếu có mẫu, ngược lại en)")
+                   help=t("cli.help_docs_language"))
     p.add_argument("--force", action="store_true")
     p.set_defaults(fn=cmd_init)
 
@@ -327,7 +327,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(fn=cmd_check)
 
     p = sub.add_parser("selftest")
-    p.add_argument("--all", action="store_true", help="cả guard của gói chưa bật")
+    p.add_argument("--all", action="store_true", help=t("cli.help_all"))
     p.set_defaults(fn=cmd_selftest)
 
     p = sub.add_parser("zone")
@@ -346,7 +346,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(fn=cmd_ledger)
 
     p = sub.add_parser("debt")
-    p.add_argument("--strict", action="store_true", help="rc 1 khi có vấn đề")
+    p.add_argument("--strict", action="store_true", help=t("cli.help_strict"))
     p.set_defaults(fn=cmd_debt)
 
     p = sub.add_parser("quota")
@@ -364,7 +364,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("mutants")
     p.add_argument("action", choices=["anchors", "plan", "run"])
-    p.add_argument("--changed", metavar="BASE", help="chỉ đột biến bị ảnh hưởng bởi diff BASE..HEAD")
+    p.add_argument("--changed", metavar="BASE", help=t("cli.help_changed"))
     p.set_defaults(fn=cmd_mutants)
 
     p = sub.add_parser("migrations")
@@ -381,18 +381,40 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _choose_lang(argv: list[str] | None) -> None:
+    """Chọn ngôn ngữ thông báo TRƯỚC khi dựng parser (để cả --help cũng đúng ngôn ngữ)."""
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--root", default=".")
+    pre.add_argument("--language")
+    pre.add_argument("--docs-language")
+    known, _ = pre.parse_known_args(argv)
+    try:
+        cfg = load(known.root, required=False)
+    except ConfigError:
+        return
+    if (cfg.root / "gatekit.toml").exists():
+        set_lang(lang_for(cfg))
+    elif known.docs_language or known.language:   # `gatekit init` trên repo chưa có cấu hình
+        cfg.data["project"]["docs_language"] = known.docs_language or ""
+        cfg.data["project"]["language"] = known.language or cfg.data["project"]["language"]
+        set_lang(lang_for(cfg))
+    else:
+        set_lang(lang_for(cfg))
+
+
 def main(argv: list[str] | None = None) -> int:
+    _choose_lang(argv)
     args = build_parser().parse_args(argv)
     if args.cmd == "hygiene" and args.action == "record" and not (args.kind and args.subject):
-        _p("record cần --kind và --subject")
+        _p(t("cli.record_args"))
         return 2
     try:
         return args.fn(args)
     except ConfigError as e:
-        _p(f"cấu hình: {e}")
+        _p(t("cli.config_error", e=e))
         return 2
     except (KeyError, ValueError, RuntimeError) as e:
-        _p(f"lỗi: {e}")
+        _p(t("cli.error", e=e))
         return 2
 
 

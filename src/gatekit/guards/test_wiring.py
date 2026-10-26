@@ -13,11 +13,13 @@ import re
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture, iter_files, read
+from gatekit.messages import t
 
 NAME = "test_wiring"
 PACK = None
 FAST = True
-DEFECT = "test/bộ đột biến tồn tại nhưng không nằm trong manifest nào ⇒ không bao giờ chạy"
+DEFECT = {"vi": "test/bộ đột biến tồn tại nhưng không nằm trong manifest nào ⇒ không bao giờ chạy",
+          "en": "a test/mutant suite exists but is in no manifest ⇒ it never runs"}
 
 TIERS = {"0", "1", "2", "3", "4"}
 
@@ -34,7 +36,7 @@ def _entries(cfg: Config) -> tuple[list[tuple[str, str, int]], list[Finding]]:
                 continue
             cols = raw.split("\t")
             if len(cols) < 3 or not cols[1].strip() or cols[2].strip() not in TIERS:
-                found.append(Finding(NAME, man, i, "dòng manifest phải là `path<TAB>làn<TAB>tầng(0-4)[<TAB>ghi chú]`"))
+                found.append(Finding(NAME, man, i, t("test_wiring.bad_line")))
                 continue
             entries.append((cols[0].strip(), man, i))
     return entries, found
@@ -49,21 +51,21 @@ def check(cfg: Config) -> list[Finding]:
                or (f.startswith(mut_dir) and f.endswith(".toml"))]
 
     if targets and not any((cfg.root / m).exists() for m in cfg["tests"]["manifests"]):
-        return [Finding(NAME, cfg["tests"]["manifests"][0], 0, f"có {len(targets)} tệp test nhưng thiếu manifest")]
+        return [Finding(NAME, cfg["tests"]["manifests"][0], 0, t("test_wiring.no_manifest", n=len(targets)))]
 
     def matched(f: str) -> bool:
         return any(f == pat or fnmatch.fnmatchcase(f, pat) for pat, _, _ in entries)
 
     for f in targets:
         if not matched(f):
-            found.append(Finding(NAME, f, 0, "test/bộ đột biến chưa khai ở manifest nào — không có nơi chạy nó"))
+            found.append(Finding(NAME, f, 0, t("test_wiring.not_wired")))
     fileset = set(files)
     for pat, man, i in entries:
         if any(ch in pat for ch in "*?["):
             if not any(fnmatch.fnmatchcase(f, pat) for f in files):
-                found.append(Finding(NAME, man, i, f"glob `{pat}` không khớp tệp nào"))
+                found.append(Finding(NAME, man, i, t("test_wiring.glob_empty", pat=pat)))
         elif pat not in fileset:
-            found.append(Finding(NAME, man, i, f"`{pat}` không tồn tại (manifest cũ)"))
+            found.append(Finding(NAME, man, i, t("test_wiring.stale", pat=pat)))
     return found
 
 

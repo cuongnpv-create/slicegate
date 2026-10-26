@@ -9,11 +9,13 @@ import re
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture, iter_files, read
+from gatekit.messages import t
 
 NAME = "partition_key_scope"
 PACK = "multi_provider"
 FAST = True
-DEFECT = "dữ liệu của hai nhà cung cấp/khách hàng trộn chung một khoá ⇒ ghi đè, đọc nhầm, rò dữ liệu chéo"
+DEFECT = {"vi": "dữ liệu của hai nhà cung cấp/khách hàng trộn chung một khoá ⇒ ghi đè, đọc nhầm, rò dữ liệu chéo",
+          "en": "data of two providers/tenants mixed under one key ⇒ overwrites, wrong reads, cross-tenant leaks"}
 
 _CREATE = re.compile(r"create\s+(?:unlogged\s+|temp(?:orary)?\s+)?table\s+(?:if\s+not\s+exists\s+)?(?P<name>[\w.\"]+)\s*\(",
                      re.I)
@@ -47,7 +49,7 @@ def check(cfg: Config) -> list[Finding]:
                 continue
             line = text.count("\n", 0, m.start()) + 1
             found.append(Finding(NAME, rel, line,
-                                 f"bảng `{m.group('name')}` thiếu cột `{spec['partition_column']}` (∨ chú thích `-- partition: global <lý do>`)"))
+                                 t("partition.missing", table=m.group("name"), column=spec["partition_column"])))
     return found
 
 

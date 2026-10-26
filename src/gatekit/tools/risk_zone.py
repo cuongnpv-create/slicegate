@@ -4,7 +4,7 @@
   K  bí mật · khoá · xác thực · quyền xem: bộ đột biến THƯỜNG TRỰC.
   F  công thức · quy tắc quyết định: số vàng nguồn ĐỘC LẬP (test thường trực) + ≥ 1 đột biến.
   khác: test hành vi + ≥ 1 ca âm có kỳ vọng từ nguồn NGOÀI mã; đột biến chỉ khi gate nghi test rỗng (≤ 3, chạy một lần).
-Vùng nặng nhất quyết. Nguồn DUY NHẤT của regex: `[zones]` trong gatekit.toml.
+Vùng nặng nhất quyết. Mã nội bộ của vùng thường: `other`. Nguồn DUY NHẤT của regex: `[zones]` trong gatekit.toml.
 """
 from __future__ import annotations
 
@@ -13,14 +13,14 @@ from dataclasses import dataclass, field
 
 from gatekit.config import Config
 from gatekit.guards._common import git
+from gatekit.messages import t
 
 ORDER = ("T", "K", "F")
-REQUIREMENTS = {
-    "T": "bộ đột biến THƯỜNG TRỰC trong manifest; đột biến gỡ từng cổng tại TỪNG chỗ gọi ⇒ ĐỎ; ca âm cho mọi đường từ chối",
-    "K": "bộ đột biến THƯỜNG TRỰC trong manifest; ca âm: thiếu quyền ⇒ từ chối có tên; bí mật ⛔ ra log",
-    "F": "số vàng nguồn ĐỘC LẬP (sách/bảng công bố/đáp án giải tích) là test thường trực + ≥ 1 đột biến đánh lõi công thức",
-    "khác": "test hành vi + ≥ 1 ca âm có kỳ vọng từ nguồn NGOÀI mã; đột biến chỉ khi gate nêu TÊN test nghi rỗng (≤ 3, một lần)",
-}
+OTHER = "other"
+
+
+def requirement(zone: str) -> str:
+    return t("zone.req_" + zone)
 
 
 @dataclass
@@ -33,11 +33,11 @@ class ZoneReport:
         for z in ORDER:
             if self.files.get(z) or self.grep_hits.get(z):
                 return z
-        return "khác"
+        return OTHER
 
     def zones(self) -> list[str]:
         zs = [z for z in ORDER if self.files.get(z) or self.grep_hits.get(z)]
-        return zs or ["khác"]
+        return zs or [OTHER]
 
 
 def classify_files(cfg: Config, files: list[str], added_lines: dict[str, list[str]] | None = None) -> ZoneReport:

@@ -10,6 +10,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+from gatekit.messages import t
 
 CONFIG_NAME = "gatekit.toml"
 LEVELS = ("lite", "standard", "regulated")
@@ -136,23 +137,23 @@ class Config:
 def validate(data: dict) -> None:
     lvl = data["project"]["level"]
     if lvl not in LEVELS:
-        raise ConfigError(f"project.level = {lvl!r} — chỉ nhận {LEVELS}")
+        raise ConfigError(t("config.level", value=lvl, allowed=LEVELS))
     dl = data["project"].get("docs_language", "")
     if dl not in ("", "vi", "en"):
-        raise ConfigError(f"project.docs_language = {dl!r} — chỉ nhận '', 'vi', 'en'")
+        raise ConfigError(t("config.docs_language", value=dl))
     prefixes = [ln["prefix"] for ln in data["ledger"]["lanes"]]
     if len(set(prefixes)) != len(prefixes):
-        raise ConfigError(f"ledger.lanes trùng prefix: {prefixes}")
+        raise ConfigError(t("config.dup_prefix", prefixes=prefixes))
     for z, spec in data["zones"].items():
         for rx in list(spec.get("paths", [])) + list(spec.get("grep", [])):
             try:
                 re.compile(rx)
             except re.error as e:
-                raise ConfigError(f"zones.{z}: regex hỏng {rx!r}: {e}") from e
+                raise ConfigError(t("config.bad_regex", zone=z, rx=rx, err=e)) from e
     known = set(DEFAULTS["packs"]) | {"fintech", "data_pipeline"}
     for p in data["project"]["packs"]:
         if p not in known:
-            raise ConfigError(f"project.packs: gói lạ {p!r} — có: {sorted(known)}")
+            raise ConfigError(t("config.unknown_pack", pack=p, known=sorted(known)))
 
 
 def load(root: Path | str = ".", *, required: bool = True) -> Config:
@@ -163,7 +164,7 @@ def load(root: Path | str = ".", *, required: bool = True) -> Config:
         with path.open("rb") as f:
             over = tomllib.load(f)
     elif required:
-        raise ConfigError(f"thiếu {path} — chạy `gatekit init` trước")
+        raise ConfigError(t("config.missing", path=path))
     data = _merge(DEFAULTS, over)
     validate(data)
     return Config(root=root, data=data)

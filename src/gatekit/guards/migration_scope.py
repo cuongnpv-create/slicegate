@@ -13,11 +13,13 @@ import re
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture
+from gatekit.messages import t
 
 NAME = "migration_scope"
 PACK = "postgres"
 FAST = True
-DEFECT = "migration đã áp bị sửa ⇒ schema các môi trường lệch nhau; hai lát song song trùng số migration"
+DEFECT = {"vi": "migration đã áp bị sửa ⇒ schema các môi trường lệch nhau; hai lát song song trùng số migration",
+          "en": "an applied migration is edited ⇒ environments drift apart; two parallel slices take the same migration number"}
 
 
 def _sha(b: bytes) -> str:
@@ -64,19 +66,19 @@ def check(cfg: Config) -> list[Finding]:
     for name, sha in cur.items():
         rel = f"{spec['migrations_dir']}/{name}"
         if name not in lock:
-            found.append(Finding(NAME, rel, 0, "migration chưa ghim — `gatekit migrations lock` sau khi gate duyệt"))
+            found.append(Finding(NAME, rel, 0, t("migration.unpinned")))
         elif lock[name] != sha:
-            found.append(Finding(NAME, rel, 0, "migration ĐÃ GHIM bị sửa byte — viết migration mới thay vì sửa"))
+            found.append(Finding(NAME, rel, 0, t("migration.edited")))
     for name in lock:
         if name not in cur:
-            found.append(Finding(NAME, lock_rel, 0, f"dòng khoá `{name}` trỏ tệp không còn"))
+            found.append(Finding(NAME, lock_rel, 0, t("migration.stale_lock", name=name)))
     pat = re.compile(spec["pattern"])
     nums = sorted(int(pat.match(n).group("n")) for n in cur)
     for a, b in zip(nums, nums[1:]):
         if b == a:
-            found.append(Finding(NAME, spec["migrations_dir"], 0, f"trùng số migration {a}"))
+            found.append(Finding(NAME, spec["migrations_dir"], 0, t("migration.duplicate", n=a)))
         elif b != a + 1:
-            found.append(Finding(NAME, spec["migrations_dir"], 0, f"đứt quãng số migration {a} → {b}"))
+            found.append(Finding(NAME, spec["migrations_dir"], 0, t("migration.gap", a=a, b=b)))
     return found
 
 
@@ -94,10 +96,10 @@ def selftest() -> list[str]:
         expect(errs, "chưa ghim", check(cfg), red=True)
     with fixture({**base, "db/migrations/0004_d.sql": "SELECT 1;\n"}, on) as cfg:
         f = check(cfg)
-        if not any("đứt" in x.message for x in f):
+        if not any(x.message == t("migration.gap", a=2, b=4) for x in f):
             errs.append("đứt quãng: kỳ vọng ĐỎ")
     with fixture({**base, "db/migrations/0002_dup.sql": "SELECT 1;\n"}, on) as cfg:
         f = check(cfg)
-        if not any("trùng" in x.message for x in f):
+        if not any(x.message == t("migration.duplicate", n=2) for x in f):
             errs.append("trùng số: kỳ vọng ĐỎ")
     return errs

@@ -18,7 +18,8 @@ def test_contract(guard):
     assert isinstance(guard.NAME, str) and guard.NAME
     assert guard.PACK is None or isinstance(guard.PACK, str)
     assert isinstance(guard.FAST, bool)
-    assert guard.DEFECT.strip(), "mỗi guard phải khai khuyết tật mã nó chặn"
+    assert set(guard.DEFECT) == {"vi", "en"} and all(v.strip() for v in guard.DEFECT.values()), \
+        "mỗi guard phải khai khuyết tật mã nó chặn, đủ vi + en"
 
 
 def test_core_guards_always_on(tmp_path):

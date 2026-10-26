@@ -12,11 +12,13 @@ import tokenize
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture, iter_files, read
+from gatekit.messages import t
 
 NAME = "naming_scope"
 PACK = None
 FAST = True
-DEFECT = "một khái niệm mang 2 tên ở 2 thứ tiếng ⇒ tìm kiếm/refactor sót chỗ, import nhầm"
+DEFECT = {"vi": "một khái niệm mang 2 tên ở 2 thứ tiếng ⇒ tìm kiếm/refactor sót chỗ, import nhầm",
+          "en": "one concept with names in two languages ⇒ searches/refactors miss places, wrong imports"}
 
 _C_COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
 _C_STRING = re.compile(r"`(?:\\.|[^`\\])*`|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'")
@@ -60,14 +62,14 @@ def check(cfg: Config) -> list[Finding]:
     exts = tuple(cfg["paths"]["code_ext"])
     for rel in iter_files(cfg, exts=exts):
         if _non_ascii(rel.rsplit("/", 1)[-1]):
-            found.append(Finding(NAME, rel, 0, "tên tệp mã phải ASCII"))
+            found.append(Finding(NAME, rel, 0, t("naming.file_ascii")))
         for name, line in names_in(rel, read(cfg, rel)):
             key = f"{rel}:{name}"
             seen.add(key)
             if key not in base:
-                found.append(Finding(NAME, rel, line, f"định danh không phải ASCII `{name}` — đặt tên tiếng Anh"))
+                found.append(Finding(NAME, rel, line, t("naming.ident", name=name)))
     for key in sorted(base - seen):
-        found.append(Finding(NAME, cfg["naming"]["baseline"], 0, f"mục baseline `{key}` không còn trong mã — xoá dòng (baseline chỉ co lại)"))
+        found.append(Finding(NAME, cfg["naming"]["baseline"], 0, t("naming.baseline_stale", key=key)))
     return found
 
 
