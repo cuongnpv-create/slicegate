@@ -82,6 +82,13 @@ DEFAULTS: dict[str, Any] = {
                                 "items", "pages", "size", "length", "width", "height", "days", "seconds", "ms"],
             "card_names": r"(?i)(card_?number|card_?no|pan|cvv2?|cvc2?|card_?cvc|card_?cvv|track_?data|track[12]|magstripe)",
         },
+        "healthcare": {
+            "phi_words": ["patient", "patients", "dob", "birth", "birthdate", "birthday", "ssn", "mrn", "diagnosis",
+                          "diagnoses", "icd", "prescription", "prescriptions", "medication", "medications", "allergy",
+                          "allergies", "insurance", "symptom", "symptoms", "treatment", "treatments", "clinical", "lab",
+                          "vitals", "pregnancy", "hiv", "genetic", "genome"],
+            "non_phi_words": ["id", "ids", "uuid", "count", "counts", "ref", "version", "flag", "enabled", "type"],
+        },
         "saas_multitenant": {
             "tenant_column": "tenant_id",
             "migrations_regex": r"(^|/)migrations?/",

@@ -36,6 +36,8 @@ AGENT_ROLE = {
         "pricing-lead": ("Giá & khuyến mãi (gói ecommerce)", "vùng F: giá, giảm giá, thuế, phí ship, làm tròn, tiền tệ"),
         "tenancy-lead": ("Cách ly khách thuê (gói saas_multitenant)", "vùng K: ngữ cảnh tenant, truy vấn, cache, job, quản trị đăng nhập hộ, xuất/xoá dữ liệu"),
         "billing-lead": ("Gói cước & tính tiền (gói saas_multitenant)", "vùng T/F: đăng ký, nâng/hạ gói, pro-rata, đo lượng dùng, giới hạn gói"),
+        "privacy-lead": ("Quyền riêng tư dữ liệu sức khoẻ (gói healthcare)", "vùng K: quyền xem tối thiểu, nhật ký truy cập, đồng ý, khử định danh, hạn lưu, truy cập khẩn cấp"),
+        "clinical-safety-lead": ("An toàn lâm sàng (gói healthcare)", "vùng F: liều thuốc, đơn vị, khoảng tham chiếu, cảnh báo lâm sàng"),
     },
     "en": {
         "chief-architect": ("Architecture", "master gate: phases/slices, architecture, services, DDL, process changes, session close, ASSIGNMENT"),
@@ -53,6 +55,8 @@ AGENT_ROLE = {
         "pricing-lead": ("Pricing & promotions (ecommerce pack)", "zone F: prices, discounts, tax, shipping fees, rounding, currency"),
         "tenancy-lead": ("Tenant isolation (saas_multitenant pack)", "zone K: tenant context, queries, caches, jobs, admin impersonation, data export/deletion"),
         "billing-lead": ("Plans & billing (saas_multitenant pack)", "zone T/F: subscriptions, upgrades/downgrades, proration, metering, plan limits"),
+        "privacy-lead": ("Health-data privacy (healthcare pack)", "zone K: minimum-necessary access, access logs, consent, de-identification, retention, break-glass"),
+        "clinical-safety-lead": ("Clinical safety (healthcare pack)", "zone F: dosing, units, reference ranges, clinical alerts"),
     },
 }
 WORDS = {
@@ -61,7 +65,7 @@ WORDS = {
 }
 GATES = ["chief-architect", "qa-lead", "security-lead", "ux-gate", "compliance-officer",
          "execution-lead", "quant-lead", "data-integrity", "checkout-lead", "pricing-lead",
-         "tenancy-lead", "billing-lead"]
+         "tenancy-lead", "billing-lead", "privacy-lead", "clinical-safety-lead"]
 LITE_SKIP = {"docs/governance/SESSION_PROTOCOL.md", "docs/governance/COORDINATOR_PROMPT.md"}
 
 
@@ -105,6 +109,8 @@ TOML_TEXT = {
         "eco_nonmoney": "từ loại trừ (weight, qty, rate, percent…)",
         "eco_card": "regex tên trường dữ liệu thẻ cho guard pci_scope",
         "rls": "true = mọi bảng tenant phải bật Row Level Security + có policy (Postgres)",
+        "phi_words": "từ đánh dấu TÊN dữ liệu sức khoẻ cho guard phi_log / phi_tag (mặc định: dob, ssn, mrn, diagnosis, medication…)",
+        "non_phi": "từ loại trừ (id, count, uuid…)",
     },
     "en": {
         "head": "# gatekit.toml — the SINGLE SOURCE of process parameters. Editing this file = changing the process ⇒ chief-architect gate.",
@@ -123,6 +129,8 @@ TOML_TEXT = {
         "eco_nonmoney": "words that exclude it (weight, qty, rate, percent…)",
         "eco_card": "regex of card-data field names for the pci_scope guard",
         "rls": "true = every tenant table must enable Row Level Security + have a policy (Postgres)",
+        "phi_words": "words marking a health-data NAME for the phi_log / phi_tag guards (default: dob, ssn, mrn, diagnosis, medication…)",
+        "non_phi": "words that exclude it (id, count, uuid…)",
     },
 }
 
@@ -141,7 +149,7 @@ name = "{name}"
 level = "{level}"          # lite | standard | regulated
 language = "{language}"    # {t["language"]}
 docs_language = "{docs_language}"   # {t["docs_language"]}
-packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce · saas_multitenant
+packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce · saas_multitenant · healthcare
 
 [paths]
 # {t["prod"]}
@@ -211,6 +219,10 @@ label_prefix = "source: LEGACY@"
 # non_money_words = [...]   # {t["eco_nonmoney"]}
 # card_names = '…'          # {t["eco_card"]}
 
+[packs.healthcare]
+# phi_words = [...]         # {t["phi_words"]}
+# non_phi_words = [...]     # {t["non_phi"]}
+
 [packs.saas_multitenant]
 tenant_column = "tenant_id"
 require_rls = false        # {t["rls"]}
@@ -252,6 +264,8 @@ def agent_names(cfg: Config) -> list[str]:
         names += ["checkout-lead", "pricing-lead"]
     if "saas_multitenant" in cfg.packs:
         names += ["tenancy-lead", "billing-lead"]
+    if "healthcare" in cfg.packs:
+        names += ["privacy-lead", "clinical-safety-lead"]
     return names
 
 

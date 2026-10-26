@@ -85,3 +85,31 @@ file = "src/gatekit/guards/tenant_rls.py"
 find = "        if tb not in policies:"
 replace = "        if False:"
 why = "bật RLS mà không có policy vẫn XANH (RLS không policy = chặn hết hoặc bị bỏ qua bởi chủ bảng)"
+
+[[mutant]]
+id = "phi-01"
+file = "src/gatekit/guards/phi_log.py"
+find = "    return bool(ws & spec[0]) and not (ws & spec[1])"
+replace = "    return False"
+why = "guard không còn nhận ra tên dữ liệu sức khoẻ ⇒ chẩn đoán vào log lọt qua"
+
+[[mutant]]
+id = "phi-02"
+file = "src/gatekit/guards/phi_log.py"
+find = "        return [node.slice.value]   # record[\"diagnosis\"]"
+replace = "        return []"
+why = "PHI lấy bằng khoá dict (record['medication']) lọt qua"
+
+[[mutant]]
+id = "phi-03"
+file = "src/gatekit/guards/phi_log.py"
+find = "    if isinstance(node, ast.Attribute):\n        return [node.attr]"
+replace = "    if isinstance(node, ast.Attribute):\n        return [node.attr] + _names(node.value)"
+why = "tính cả biến gốc ⇒ patient.id bị báo nhầm, người dùng tắt guard"
+
+[[mutant]]
+id = "phi-tag-01"
+file = "src/gatekit/guards/phi_tag.py"
+find = "            if is_phi(spec, m.group(\"col\")) and not _TAG.search(line):"
+replace = "            if False:"
+why = "cột dữ liệu sức khoẻ mới vào DB không qua rà soát"
