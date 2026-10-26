@@ -9,8 +9,8 @@ if [ -f docs/STATUS.md ]; then
   awk '/^## S[0-9]+ /{n++} n==1{print} n>1{exit}' docs/STATUS.md | head -20
   echo
 fi
-if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
-"${GK[@]}" report --brief 2>/dev/null || echo "(gatekit chưa cài — pip install gatekit)"
+# Không có gatekit trên PATH (vd chỉ cài plugin Claude Code) ⇒ bỏ qua; hook SessionStart của plugin in thay.
+if command -v gatekit >/dev/null 2>&1; then gatekit report --brief 2>/dev/null; fi
 echo
 echo "── 🌿 GIT ──"
 echo "   nhánh: $(git branch --show-current 2>/dev/null) · HEAD $(git rev-parse --short HEAD 2>/dev/null)"

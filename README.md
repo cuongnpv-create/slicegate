@@ -6,7 +6,7 @@ sổ phán append-only, máy gác chạy ở hook, **đột biến theo vùng r�
 Rút ra từ một dự án thật — nền tảng giao dịch đa sàn, nhiều agent chạy song song — rồi tách phần **cơ chế** (dùng
 chung) khỏi phần **nội dung** riêng dự án. Mọi tham số dự án nằm ở một tệp `gatekit.toml`.
 
-> Trạng thái: `0.1.0` — bộ LÕI + 6 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
+> Trạng thái: `0.2.0` — bộ LÕI + 6 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
 
 ## Vì sao
 
@@ -22,8 +22,35 @@ hai phiên song song giẫm nhau · quy trình phình to hơn phần mã. gateki
 
 ## Cài và dựng
 
+### Cách 1 — plugin Claude Code (khuyên dùng)
+
+```
+/plugin marketplace add cuongnpv-create/gatekit
+/plugin install gatekit@gatekit
+```
+Claude Code 2.1.275 trở lên cài được một bước: `/plugin install gatekit --marketplace cuongnpv-create/gatekit`
+(ngoài phiên: `claude plugin marketplace add cuongnpv-create/gatekit && claude plugin install gatekit@gatekit`).
+Repo private ⇒ máy cài phải có quyền đọc repo trên GitHub.
+
+Plugin mang theo:
+
+| Thành phần | Dùng |
+|---|---|
+| `/gatekit:init` | hỏi mức, gói, ngôn ngữ, làn ⇒ chạy `gatekit init` ⇒ tự điền `CLAUDE.md`, `[zones]`, manifest test từ mã thật ⇒ `check --full` xanh |
+| `/gatekit:check` | chạy mọi guard, sửa từng chỗ đỏ ngay trong mã (⛔ nới guard) |
+| `/gatekit:gate G-IN\|G-OUT\|G-DECIDE <lát>` | đo · cấp số · chọn gate · gửi gói · ghi phán vào sổ |
+| `/gatekit:coordinator` | mở phiên điều phối theo `SESSION_PROTOCOL` |
+| lệnh `gatekit` | có sẵn trên PATH của Bash trong Claude Code — ⛔ cần pip (chỉ cần Python ≥ 3.11) |
+| hook `SessionStart` | in tóm tắt trạng thái khi mở phiên trong dự án đã cài gatekit |
+
+`gatekit hooks install` chạy từ plugin ghi đường dẫn lệnh vào git hook, nên `pre-commit` / `pre-push` vẫn chạy được
+khi commit ngoài Claude Code. Cập nhật plugin xong (đường dẫn đổi) thì chạy lại `gatekit hooks install`.
+Lưu ý: claude.ai và Cowork không cài plugin có thư mục `bin/` — plugin này dành cho Claude Code.
+
+### Cách 2 — gói pip
+
 ```bash
-pip install git+https://github.com/<owner>/gatekit        # hoặc: pip install -e . trong bản sao repo
+pip install git+https://github.com/cuongnpv-create/gatekit        # hoặc: pip install -e . trong bản sao repo
 cd du-an-cua-ban && git init        # nếu chưa là repo
 gatekit init --name "MyApp" --level standard --pack i18n --pack postgres
 gatekit hooks install
@@ -86,7 +113,7 @@ gatekit report      tổng hợp (hook SessionStart dùng bản --brief)
 ## gatekit tự gác chính nó
 
 Repo này chạy chính gatekit (`gatekit.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`gatekit check --full` XANH · 207 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
+`gatekit check --full` XANH · 217 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
 (vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
 
 Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về
@@ -95,6 +122,10 @@ checkout gốc, nên đột biến không có tác dụng. Lỗi ấy giờ đư
 ## Cấu trúc
 
 ```
+.claude-plugin/        plugin.json · marketplace.json · icon.png (repo vừa là plugin vừa là marketplace)
+bin/gatekit            lệnh của plugin (chạy src/ trực tiếp)
+skills/                /gatekit:init · check · gate · coordinator
+hooks/                 SessionStart của plugin
 src/gatekit/
   config.py            gatekit.toml → mặc định + kiểm hợp lệ
   messages.py          catalog thông báo vi · en, một hàm t()
@@ -110,7 +141,6 @@ mutants/               bộ đột biến của chính gatekit
 
 ## Lộ trình
 
-- Đóng gói thành plugin Claude Code (agent + hook + lệnh) bên cạnh gói pip.
 - Thêm gói: `mobile`, `saas_multitenant`, `ecommerce` (vùng T: thanh toán, hoàn tiền), `healthcare`.
 - Bảng điều khiển đọc sổ phán / điều kiện OPEN / nhật ký guard.
 
