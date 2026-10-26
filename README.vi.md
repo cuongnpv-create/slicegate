@@ -34,8 +34,6 @@ hai phiên song song giẫm nhau · quy trình phình to hơn phần mã. sliceg
 ```
 Claude Code 2.1.275 trở lên cài được một bước: `/plugin install slicegate --marketplace cuongnpv-create/slicegate`
 (ngoài phiên: `claude plugin marketplace add cuongnpv-create/slicegate && claude plugin install slicegate@slicegate`).
-Repo private ⇒ máy cài phải có quyền đọc repo trên GitHub.
-
 Plugin mang theo:
 
 | Thành phần | Dùng |
@@ -54,7 +52,7 @@ Lưu ý: claude.ai và Cowork không cài plugin có thư mục `bin/` — plugi
 ### Cách 2 — gói pip
 
 ```bash
-pip install git+https://github.com/cuongnpv-create/slicegate        # hoặc: pip install -e . trong bản sao repo
+pip install slicegate                                               # hoặc: pipx install slicegate · uvx slicegate
 cd du-an-cua-ban && git init        # nếu chưa là repo
 slicegate init --name "MyApp" --level standard --pack i18n --pack postgres
 slicegate hooks install
@@ -174,4 +172,4 @@ mutants/               bộ đột biến của chính slicegate
 
 ## Giấy phép
 
-Chưa chọn — mặc định giữ toàn quyền tác giả.
+[MIT](LICENSE).

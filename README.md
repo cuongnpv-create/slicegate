@@ -1,6 +1,6 @@
 # slicegate
 
-**English** · [Tiếng Việt](README.vi.md)
+**English** · [Tiếng Việt](https://github.com/cuongnpv-create/slicegate/blob/main/README.vi.md)
 
 *Every slice of AI-written code passes a gate.*
 
@@ -80,7 +80,7 @@ is for Claude Code.
 ### Option 2 — pip
 
 ```bash
-pip install git+https://github.com/cuongnpv-create/slicegate      # or: pip install -e . in a clone
+pip install slicegate                                               # or: pipx install slicegate · uvx slicegate
 cd your-project && git init                                         # if it is not a repo yet
 slicegate init --name "MyApp" --language en --level standard --pack i18n --pack postgres
 slicegate hooks install
@@ -167,7 +167,7 @@ now warns when every mutant survives.
 
 ## Case study
 
-[`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) (in Vietnamese) — slicegate set up on
+[`docs/case-studies/itsdangerous.md`](https://github.com/cuongnpv-create/slicegate/blob/main/docs/case-studies/itsdangerous.md) (in Vietnamese) — slicegate set up on
 `pallets/itsdangerous`: 6 zone-K mutants exposed a real test gap in key rotation (all 297 tests stayed green with half of
 the key-trial loop removed); 3 slicegate rough edges found and fixed on the spot (first `check` went from 12 false REDs to 0).
 
@@ -198,4 +198,4 @@ mutants/               slicegate's own mutant suites
 
 ## License
 
-Not chosen yet — all rights reserved by the author for now.
+[MIT](https://github.com/cuongnpv-create/slicegate/blob/main/LICENSE).
