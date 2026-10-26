@@ -7,7 +7,7 @@ thấy ngay chỗ đổi đơn vị sai; chuyển đổi đi qua một module du
 ĐỎ khi một định danh là TÊN ĐẠI LƯỢNG — tách từ snake_case/camelCase, có từ trong `packs.logistics.quantity_words`
 (weight, distance, length, volume, temperature…), ⛔ có từ trong `non_quantity_words` (unit, ratio, factor, type…) —
 mà ⛔ có từ nào trong `unit_words` (kg, lb, km, mi, cbm, c, f…):
-  · Python: tham số hàm, biến / thuộc tính được gán, trường có chú thích kiểu (`x = len(…)` không tính);
+  · Python: tham số hàm, biến / thuộc tính được gán, trường có chú thích kiểu (`height = len(rows)` là số phần tử, không tính);
   · JS/TS: `const|let|var <tên> =`, trường `<tên>: number`;
   · SQL: cột trong `CREATE TABLE` / `ALTER TABLE … ADD COLUMN`.
 Miễn từng chỗ: `units: ignore <lý do>` trên cùng dòng hoặc dòng ngay trên. Bỏ qua tệp khớp `unit_skip` (mặc định
@@ -114,8 +114,8 @@ def selftest() -> list[str]:
         expect(errs, "thuộc tính gán không đơn vị", check(cfg), red=True)
     with fixture({"src/parcel.py": "from dataclasses import dataclass\n@dataclass\nclass Parcel:\n    lengthCm: int\n    widthCm: int\n    volume: float\n"}, on) as cfg:
         expect(errs, "trường dataclass volume không đơn vị", check(cfg), red=True)
-    with fixture({"src/util.py": "def pad(xs):\n    length = len(xs)\n    return length\n"}, on) as cfg:
-        expect(errs, "length = len(...) là số phần tử", check(cfg), red=False)
+    with fixture({"src/grid.py": "def size(rows):\n    height = len(rows)\n    return height\n"}, on) as cfg:
+        expect(errs, "height = len(...) là số phần tử", check(cfg), red=False)
     with fixture({"src/util.py": "def pad(xs, length):  # units: ignore độ dài chuỗi, không phải kích thước\n    return xs\n"}, on) as cfg:
         expect(errs, "miễn có lý do", check(cfg), red=False)
     with fixture({"frontend/src/eta.ts": "export const distance = route.total;\n"}, on) as cfg:

@@ -126,7 +126,7 @@ id = "unit-02"
 file = "src/gatekit/guards/unit_suffix.py"
 find = "    return isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == \"len\""
 replace = "    return False"
-why = "length = len(xs) bị báo nhầm là kích thước ⇒ người dùng tắt guard"
+why = "height = len(rows) bị báo nhầm là kích thước ⇒ người dùng tắt guard"
 
 [[mutant]]
 id = "time-01"
