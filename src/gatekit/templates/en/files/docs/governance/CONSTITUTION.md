@@ -59,3 +59,9 @@ total = charged = booked. Card data never lives in the system (tokens only). Enf
 Every request, job, cache key and customer-data row belongs to exactly one tenant, taken from the authenticated session.
 A query without a tenant filter is a defect, even when ids are hard to guess. Enforced by: `tenant_scope`, `tenant_rls`.
 {{/pack}}
+{{#pack healthcare}}
+
+## Article 14 — Health data is minimal and traceable
+Every read of health data has a reader, a reason and a log row; that data never leaves the protected zone (logs,
+analytics, notifications). Every clinical number carries a unit and a source. Enforced by: `phi_log`, `phi_tag`.
+{{/pack}}

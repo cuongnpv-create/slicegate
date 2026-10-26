@@ -59,3 +59,9 @@ dòng = tổng đơn = số thu = số ghi sổ. Dữ liệu thẻ không nằm 
 Mỗi request, mỗi job, mỗi khoá cache và mỗi dòng dữ liệu khách thuộc đúng một tenant, lấy từ phiên đã xác thực. Truy vấn
 không lọc tenant là lỗi, kể cả khi id khó đoán. Máy chặn: `tenant_scope`, `tenant_rls`.
 {{/pack}}
+{{#pack healthcare}}
+
+## Điều 14 — Dữ liệu sức khoẻ là tối thiểu và có dấu vết
+Mỗi lần đọc dữ liệu sức khoẻ có người đọc, lý do và một dòng nhật ký; dữ liệu ấy ⛔ rời vùng được bảo vệ (log, analytics,
+thông báo). Mọi con số lâm sàng mang đơn vị và có nguồn. Máy chặn: `phi_log`, `phi_tag`.
+{{/pack}}

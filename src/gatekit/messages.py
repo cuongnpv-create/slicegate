@@ -153,6 +153,9 @@ CATALOG: dict[str, dict[str, str]] = {
         "tenant.query": "truy vấn chạm bảng tenant `{tables}` mà không lọc `{column}` (∨ `tenant-scope: ignore <lý do>`)",
         "rls.not_enabled": "bảng tenant `{table}` chưa `ENABLE ROW LEVEL SECURITY`",
         "rls.no_policy": "bảng tenant `{table}` chưa có `CREATE POLICY` nào",
+        # ── phi_log · phi_tag ──
+        "phi.sink": "dữ liệu sức khoẻ `{names}` đi vào {where} — log/analytics chỉ được mang id nội bộ",
+        "phi.untagged": "cột dữ liệu sức khoẻ `{name}` thiếu nhãn `-- phi` (khai mã hoá / quyền xem / hạn lưu trên cùng dòng)",
         # ── migration_scope ──
         "migration.unpinned": "migration chưa ghim — `gatekit migrations lock` sau khi gate duyệt",
         "migration.edited": "migration ĐÃ GHIM bị sửa byte — viết migration mới thay vì sửa",
@@ -309,6 +312,9 @@ CATALOG: dict[str, dict[str, str]] = {
         "tenant.query": "query touches tenant table `{tables}` without filtering on `{column}` (∨ `tenant-scope: ignore <reason>`)",
         "rls.not_enabled": "tenant table `{table}` does not `ENABLE ROW LEVEL SECURITY`",
         "rls.no_policy": "tenant table `{table}` has no `CREATE POLICY`",
+        # ── phi_log · phi_tag ──
+        "phi.sink": "health data `{names}` flows into {where} — logs/analytics may only carry internal ids",
+        "phi.untagged": "health-data column `{name}` lacks a `-- phi` tag (state encryption / access / retention on the same line)",
         # ── migration_scope ──
         "migration.unpinned": "migration not pinned — `gatekit migrations lock` after the gate approves",
         "migration.edited": "a PINNED migration was edited — write a new migration instead",
