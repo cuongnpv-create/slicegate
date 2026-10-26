@@ -156,6 +156,11 @@ CATALOG: dict[str, dict[str, str]] = {
         # ── phi_log · phi_tag ──
         "phi.sink": "dữ liệu sức khoẻ `{names}` đi vào {where} — log/analytics chỉ được mang id nội bộ",
         "phi.untagged": "cột dữ liệu sức khoẻ `{name}` thiếu nhãn `-- phi` (khai mã hoá / quyền xem / hạn lưu trên cùng dòng)",
+        # ── unit_suffix · naive_time ──
+        "unit.missing": "đại lượng `{name}` không mang đơn vị trong tên (vd `_kg`, `_km`, `_cbm`, `_c`) ∨ `units: ignore <lý do>`",
+        "time.naive_py": "`{call}` tạo mốc thời gian không múi giờ — truyền `timezone.utc` / `tzinfo=`",
+        "time.naive_sql": "cột kiểu `{type}` không lưu múi giờ — dùng `timestamptz` (`timestamp with time zone`)",
+        "time.naive_js": "`new Date(\"…giờ…\")` không có `Z` / độ lệch múi giờ ⇒ trình duyệt hiểu theo giờ máy",
         # ── migration_scope ──
         "migration.unpinned": "migration chưa ghim — `gatekit migrations lock` sau khi gate duyệt",
         "migration.edited": "migration ĐÃ GHIM bị sửa byte — viết migration mới thay vì sửa",
@@ -315,6 +320,11 @@ CATALOG: dict[str, dict[str, str]] = {
         # ── phi_log · phi_tag ──
         "phi.sink": "health data `{names}` flows into {where} — logs/analytics may only carry internal ids",
         "phi.untagged": "health-data column `{name}` lacks a `-- phi` tag (state encryption / access / retention on the same line)",
+        # ── unit_suffix · naive_time ──
+        "unit.missing": "quantity `{name}` carries no unit in its name (e.g. `_kg`, `_km`, `_cbm`, `_c`) ∨ `units: ignore <reason>`",
+        "time.naive_py": "`{call}` creates a timestamp without a time zone — pass `timezone.utc` / `tzinfo=`",
+        "time.naive_sql": "column type `{type}` stores no time zone — use `timestamptz` (`timestamp with time zone`)",
+        "time.naive_js": "`new Date(\"…time…\")` without `Z` / an offset ⇒ the browser reads it in the machine's time zone",
         # ── migration_scope ──
         "migration.unpinned": "migration not pinned — `gatekit migrations lock` after the gate approves",
         "migration.edited": "a PINNED migration was edited — write a new migration instead",

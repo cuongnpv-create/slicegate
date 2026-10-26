@@ -8,7 +8,7 @@ from gatekit.cli import main
 from gatekit.config import load
 from gatekit.scaffold import init
 
-ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline", "ecommerce", "saas_multitenant", "healthcare"]
+ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline", "ecommerce", "saas_multitenant", "healthcare", "logistics"]
 
 
 @pytest.mark.parametrize("lang", ["vi", "en"])
@@ -35,6 +35,9 @@ def test_init_renders_clean(repo, level, packs, lang):
     if "healthcare" in packs:
         assert {"privacy-lead", "clinical-safety-lead"} <= set(agents)
         assert (repo / "docs/governance/HEALTHCARE_GUIDE.md").exists()
+    if "logistics" in packs:
+        assert {"fulfillment-lead", "routing-lead"} <= set(agents)
+        assert (repo / "docs/governance/LOGISTICS_GUIDE.md").exists()
     if level == "lite":
         assert not (repo / "docs/ledger/LEDGER.md").exists()
         assert not (repo / "docs/governance/SESSION_PROTOCOL.md").exists()

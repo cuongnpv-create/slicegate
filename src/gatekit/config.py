@@ -89,6 +89,18 @@ DEFAULTS: dict[str, Any] = {
                           "vitals", "pregnancy", "hiv", "genetic", "genome"],
             "non_phi_words": ["id", "ids", "uuid", "count", "counts", "ref", "version", "flag", "enabled", "type"],
         },
+        "logistics": {
+            "quantity_words": ["weight", "mass", "distance", "width", "height", "depth", "girth", "volume", "temperature",
+                               "payload"],
+            "unit_words": ["kg", "g", "gram", "grams", "mg", "lb", "lbs", "oz", "t", "ton", "tons", "tonne", "tonnes",
+                           "mm", "cm", "m", "km", "in", "inch", "inches", "ft", "yd", "mi", "mile", "miles", "nmi",
+                           "l", "ml", "liter", "liters", "litre", "litres", "m3", "cbm", "cuft", "gal",
+                           "c", "f", "k", "celsius", "fahrenheit", "kelvin", "px", "pt", "em", "rem", "dp", "chars", "bytes"],
+            "non_quantity_words": ["pct", "percent", "ratio", "factor", "divisor", "unit", "units", "uom", "class",
+                                   "type", "id", "label", "name", "band", "tier", "mode", "items", "count", "len",
+                                   "line", "text", "string", "list", "array", "queue", "buffer", "key"],
+            "unit_skip": [r"\.(tsx|jsx)$"],
+        },
         "saas_multitenant": {
             "tenant_column": "tenant_id",
             "migrations_regex": r"(^|/)migrations?/",

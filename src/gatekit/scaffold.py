@@ -38,6 +38,8 @@ AGENT_ROLE = {
         "billing-lead": ("Gói cước & tính tiền (gói saas_multitenant)", "vùng T/F: đăng ký, nâng/hạ gói, pro-rata, đo lượng dùng, giới hạn gói"),
         "privacy-lead": ("Quyền riêng tư dữ liệu sức khoẻ (gói healthcare)", "vùng K: quyền xem tối thiểu, nhật ký truy cập, đồng ý, khử định danh, hạn lưu, truy cập khẩn cấp"),
         "clinical-safety-lead": ("An toàn lâm sàng (gói healthcare)", "vùng F: liều thuốc, đơn vị, khoảng tham chiếu, cảnh báo lâm sàng"),
+        "fulfillment-lead": ("Vận hành giao nhận (gói logistics)", "vùng T: đặt chỗ hãng vận chuyển, mua nhãn, máy trạng thái chuyến hàng, webhook hãng, giữ tồn kho, huỷ / hoàn"),
+        "routing-lead": ("Cước & tuyến (gói logistics)", "vùng F: tính cước, trọng lượng quy đổi, đơn vị, ETA, giờ cắt, SLA, tối ưu tuyến"),
     },
     "en": {
         "chief-architect": ("Architecture", "master gate: phases/slices, architecture, services, DDL, process changes, session close, ASSIGNMENT"),
@@ -57,6 +59,8 @@ AGENT_ROLE = {
         "billing-lead": ("Plans & billing (saas_multitenant pack)", "zone T/F: subscriptions, upgrades/downgrades, proration, metering, plan limits"),
         "privacy-lead": ("Health-data privacy (healthcare pack)", "zone K: minimum-necessary access, access logs, consent, de-identification, retention, break-glass"),
         "clinical-safety-lead": ("Clinical safety (healthcare pack)", "zone F: dosing, units, reference ranges, clinical alerts"),
+        "fulfillment-lead": ("Fulfillment (logistics pack)", "zone T: carrier booking, label purchase, shipment state machine, carrier webhooks, stock reservation, cancel / return"),
+        "routing-lead": ("Rates & routing (logistics pack)", "zone F: rating, dimensional weight, units, ETA, cut-off times, SLAs, route optimization"),
     },
 }
 WORDS = {
@@ -65,7 +69,8 @@ WORDS = {
 }
 GATES = ["chief-architect", "qa-lead", "security-lead", "ux-gate", "compliance-officer",
          "execution-lead", "quant-lead", "data-integrity", "checkout-lead", "pricing-lead",
-         "tenancy-lead", "billing-lead", "privacy-lead", "clinical-safety-lead"]
+         "tenancy-lead", "billing-lead", "privacy-lead", "clinical-safety-lead",
+         "fulfillment-lead", "routing-lead"]
 LITE_SKIP = {"docs/governance/SESSION_PROTOCOL.md", "docs/governance/COORDINATOR_PROMPT.md"}
 
 
@@ -111,6 +116,10 @@ TOML_TEXT = {
         "rls": "true = mọi bảng tenant phải bật Row Level Security + có policy (Postgres)",
         "phi_words": "từ đánh dấu TÊN dữ liệu sức khoẻ cho guard phi_log / phi_tag (mặc định: dob, ssn, mrn, diagnosis, medication…)",
         "non_phi": "từ loại trừ (id, count, uuid…)",
+        "qty_words": "từ đánh dấu TÊN đại lượng cho guard unit_suffix (mặc định: weight, distance, width, height, volume, temperature…)",
+        "unit_words": "từ đơn vị — tên có một trong các từ này là đã mang đơn vị (kg, lb, km, mi, cbm, c, f…)",
+        "non_qty": "từ loại trừ (unit, ratio, factor, type…)",
+        "unit_skip": "regex tệp guard unit_suffix bỏ qua (mặc định .tsx/.jsx: width/height giao diện là pixel)",
     },
     "en": {
         "head": "# gatekit.toml — the SINGLE SOURCE of process parameters. Editing this file = changing the process ⇒ chief-architect gate.",
@@ -131,6 +140,10 @@ TOML_TEXT = {
         "rls": "true = every tenant table must enable Row Level Security + have a policy (Postgres)",
         "phi_words": "words marking a health-data NAME for the phi_log / phi_tag guards (default: dob, ssn, mrn, diagnosis, medication…)",
         "non_phi": "words that exclude it (id, count, uuid…)",
+        "qty_words": "words marking a quantity NAME for the unit_suffix guard (default: weight, distance, width, height, volume, temperature…)",
+        "unit_words": "unit words — a name containing one of these already carries its unit (kg, lb, km, mi, cbm, c, f…)",
+        "non_qty": "words that exclude it (unit, ratio, factor, type…)",
+        "unit_skip": "regexes of files the unit_suffix guard skips (default .tsx/.jsx: UI width/height are pixels)",
     },
 }
 
@@ -149,7 +162,7 @@ name = "{name}"
 level = "{level}"          # lite | standard | regulated
 language = "{language}"    # {t["language"]}
 docs_language = "{docs_language}"   # {t["docs_language"]}
-packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce · saas_multitenant · healthcare
+packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce · saas_multitenant · healthcare · logistics
 
 [paths]
 # {t["prod"]}
@@ -223,6 +236,12 @@ label_prefix = "source: LEGACY@"
 # phi_words = [...]         # {t["phi_words"]}
 # non_phi_words = [...]     # {t["non_phi"]}
 
+[packs.logistics]
+# quantity_words = [...]    # {t["qty_words"]}
+# unit_words = [...]        # {t["unit_words"]}
+# non_quantity_words = [...]   # {t["non_qty"]}
+# unit_skip = ['\\.(tsx|jsx)$']   # {t["unit_skip"]}
+
 [packs.saas_multitenant]
 tenant_column = "tenant_id"
 require_rls = false        # {t["rls"]}
@@ -266,6 +285,8 @@ def agent_names(cfg: Config) -> list[str]:
         names += ["tenancy-lead", "billing-lead"]
     if "healthcare" in cfg.packs:
         names += ["privacy-lead", "clinical-safety-lead"]
+    if "logistics" in cfg.packs:
+        names += ["fulfillment-lead", "routing-lead"]
     return names
 
 

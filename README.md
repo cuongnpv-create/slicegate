@@ -6,7 +6,7 @@ sổ phán append-only, máy gác chạy ở hook, **đột biến theo vùng r�
 Rút ra từ một dự án thật — nền tảng giao dịch đa sàn, nhiều agent chạy song song — rồi tách phần **cơ chế** (dùng
 chung) khỏi phần **nội dung** riêng dự án. Mọi tham số dự án nằm ở một tệp `gatekit.toml`.
 
-> Trạng thái: `0.2.0` — bộ LÕI + 9 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
+> Trạng thái: `0.2.0` — bộ LÕI + 10 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
 
 ## Vì sao
 
@@ -97,6 +97,7 @@ hai ngôn ngữ song song: cùng tập tệp / khoá, cùng chỗ giữ / tham s
 | `ecommerce` | guard `money_float` (tiền ⛔ float — Python, SQL, `parseFloat`), `pci_scope` (⛔ lưu số thẻ / CVV) · agent `checkout-lead` (vùng T: đơn, thanh toán, webhook, hoàn tiền, tồn kho), `pricing-lead` (vùng F: giá, khuyến mãi, thuế, làm tròn) · `ECOMMERCE_GUIDE.md` (vùng gợi ý, luật cứng, bộ đột biến mẫu) · Điều 12 "Tiền là chính xác" |
 | `saas_multitenant` | guard `tenant_scope` (bảng có cột tenant; mọi câu SQL trong mã chạm bảng tenant phải lọc tenant — Python, JS/TS, Go, Java…, tệp `.sql`), `tenant_rls` (bật `require_rls`: bảng tenant phải bật Row Level Security + có policy) · agent `tenancy-lead` (vùng K: ngữ cảnh tenant, cache, job, đăng nhập hộ, xuất/xoá dữ liệu), `billing-lead` (vùng T/F: đăng ký, pro-rata, đo lượng dùng, giới hạn gói) · `SAAS_GUIDE.md` (mô hình cách ly, vùng gợi ý, test chéo tenant, bộ đột biến mẫu) · Điều 13 "Khách thuê là tường minh" |
 | `healthcare` | guard `phi_log` (dữ liệu sức khoẻ ⛔ vào print / log / raise / analytics / công cụ bắt lỗi — Python, JS/TS), `phi_tag` (cột SQL chứa dữ liệu sức khoẻ phải khai `-- phi` ⇒ bản đồ dữ liệu) · agent `privacy-lead` (vùng K: quyền xem tối thiểu, nhật ký mọi lần đọc, truy cập khẩn cấp, đồng ý, khử định danh), `clinical-safety-lead` (vùng F: liều, đơn vị, khoảng tham chiếu, cảnh báo) · `HEALTHCARE_GUIDE.md` · Điều 14 "Dữ liệu sức khoẻ là tối thiểu và có dấu vết" |
+| `logistics` | guard `unit_suffix` (tên đại lượng — weight, distance, volume, temperature… — phải mang đơn vị: `weight_kg`, `distanceKm`, `temp_c` — Python, JS/TS, SQL), `naive_time` (mốc thời gian ⛔ ngây thơ: `datetime.utcnow()`, `now()` không tz, SQL `timestamp`, JS `new Date("… hh:mm")`) · agent `fulfillment-lead` (vùng T: đặt chỗ hãng, nhãn, máy trạng thái chuyến hàng, webhook, tồn kho, COD), `routing-lead` (vùng F: cước, trọng lượng quy đổi, ETA, giờ cắt, SLA) · `LOGISTICS_GUIDE.md` · Điều 15 "Đại lượng và thời gian không mơ hồ" |
 
 ## Lệnh
 
@@ -116,7 +117,7 @@ gatekit report      tổng hợp (hook SessionStart dùng bản --brief)
 ## gatekit tự gác chính nó
 
 Repo này chạy chính gatekit (`gatekit.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`gatekit check --full` XANH · 250 test pytest · **21/21 đột biến bị giết** trên các guard và luật quyết định
+`gatekit check --full` XANH · 260 test pytest · **25/25 đột biến bị giết** trên các guard và luật quyết định
 (vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
 
 Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về

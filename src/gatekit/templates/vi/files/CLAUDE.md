@@ -36,6 +36,7 @@ Hook `SessionStart` in sẵn: khối đầu STATUS, điều kiện còn mở, tr
 {{/pack}}{{#pack ecommerce}}- **Thương mại điện tử:** tiền là số nguyên đơn vị nhỏ nhất hoặc Decimal, ⛔ float; ⛔ lưu số thẻ / CVV. Máy chặn: `money_float`, `pci_scope`. Luật ngành: `docs/governance/ECOMMERCE_GUIDE.md`.
 {{/pack}}{{#pack saas_multitenant}}- **SaaS nhiều khách thuê:** ngữ cảnh tenant chỉ từ phiên đã xác thực; mọi bảng dữ liệu khách có cột tenant, mọi truy vấn lọc tenant; cache / job / lưu trữ mang tenant. Máy chặn: `tenant_scope`, `tenant_rls`. Luật ngành: `docs/governance/SAAS_GUIDE.md`.
 {{/pack}}{{#pack healthcare}}- **Y tế:** dữ liệu sức khoẻ chỉ người có quan hệ điều trị được xem, mọi lần đọc được ghi nhật ký; ⛔ vào log / analytics / công cụ bắt lỗi; cột chứa dữ liệu sức khoẻ khai nhãn `-- phi`; mọi đại lượng lâm sàng mang đơn vị. Máy chặn: `phi_log`, `phi_tag`. Luật ngành: `docs/governance/HEALTHCARE_GUIDE.md`.
+{{/pack}}{{#pack logistics}}- **Logistics:** mọi đại lượng vật lý mang đơn vị trong tên (`weight_kg`, `distance_km`); đổi đơn vị qua một module duy nhất; mốc thời gian luôn mang múi giờ (lưu UTC, giờ địa phương chỉ để hiển thị); gọi hãng vận chuyển có khoá chống lặp. Máy chặn: `unit_suffix`, `naive_time`. Luật ngành: `docs/governance/LOGISTICS_GUIDE.md`.
 {{/pack}}
 
 ---
