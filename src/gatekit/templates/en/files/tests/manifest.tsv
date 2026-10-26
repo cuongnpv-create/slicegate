@@ -1,0 +1,3 @@
+# test manifest — one line each: path|glob <TAB> lane <TAB> tier(0-4) <TAB> note
+# tiers: 0 guards · 1 pure · 2 DB/service · 3 replay/E2E · 4 cross-lane contract
+# a test that exists but matches no line ⇒ guard test_wiring RED

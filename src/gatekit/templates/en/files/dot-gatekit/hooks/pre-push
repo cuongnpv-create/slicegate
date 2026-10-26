@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# pre-push — gatekit. FULL: selftest of every guard (negative cases) + whole-tree check + mutant anchors + duplicate ledger ids.
+# fail-CLOSED: a guard RED or unable to run ⇒ push blocked.
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
+"${GK[@]}" selftest >/dev/null || { "${GK[@]}" selftest; echo "pre-push: 🔴 selftest RED"; exit 1; }
+"${GK[@]}" check --full || { echo "pre-push: 🔴 gatekit check --full RED"; exit 1; }

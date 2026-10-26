@@ -1,5 +1,7 @@
 """`gatekit init` — dựng bộ quy trình vào một repo từ mẫu.
 
+Bộ mẫu theo ngôn ngữ: `templates/<vi|en>/`, `packs/<gói>/<vi|en>/` (chọn bởi `doc_lang`).
+
 Mẫu dùng 3 cú pháp, ⛔ thư viện ngoài:
   {{KEY}}                          thay bằng giá trị
   {{#level lite standard}}…{{/level}}   giữ khi mức hiện tại thuộc danh sách
@@ -15,18 +17,39 @@ from pathlib import Path
 
 from gatekit.config import CONFIG_NAME, Config, from_dict
 
+TEMPLATE_LANGS = ("vi", "en")
+
 AGENT_ROLE = {
-    "chief-architect": ("Kiến trúc", "gate tổng: pha/lát, kiến trúc, dịch vụ, DDL, sửa quy trình, kết phiên, GIAO VIỆC"),
-    "qa-lead": ("QA", "test có răng: ca âm, đột biến theo vùng, manifest, ngân sách"),
-    "security-lead": ("Bảo mật", "vùng K: bí mật, khoá, xác thực, phân quyền, kiểm toán"),
-    "ux-gate": ("Sản phẩm/UX", "thao tác an toàn, trạng thái màn, thuật ngữ, hợp đồng FE"),
-    "compliance-officer": ("Tuân thủ", "quyền được phép, đồng ý, dữ liệu cá nhân, điều khoản bên thứ ba"),
-    "product-director": ("Giám đốc sản phẩm (TẠO, ⛔ gate)", "BE: làm gì, quy tắc, máy trạng thái, hợp đồng API, nghiệm thu"),
-    "design-director": ("Giám đốc thiết kế (TẠO, ⛔ gate)", "FE: hệ thiết kế, màn, trạng thái, câu chữ"),
-    "execution-lead": ("Đường tiền (gói fintech)", "vùng T: ý định → định tuyến → bộ dịch, sổ lệnh, tiền"),
-    "quant-lead": ("Công thức (gói fintech)", "vùng F: đúng sách, số vàng độc lập, tất định"),
-    "domain-auditor": ("Kiểm toán công thức (gói fintech)", "chỉ đọc: tái hiện số độc lập, phân loại ĐÚNG/SAI/BỊA/CHẾT"),
-    "data-integrity": ("Dữ liệu (gói data_pipeline)", "nguồn đã chốt, hổng/trùng, phân vùng, giới hạn gọi API"),
+    "vi": {
+        "chief-architect": ("Kiến trúc", "gate tổng: pha/lát, kiến trúc, dịch vụ, DDL, sửa quy trình, kết phiên, GIAO VIỆC"),
+        "qa-lead": ("QA", "test có răng: ca âm, đột biến theo vùng, manifest, ngân sách"),
+        "security-lead": ("Bảo mật", "vùng K: bí mật, khoá, xác thực, phân quyền, kiểm toán"),
+        "ux-gate": ("Sản phẩm/UX", "thao tác an toàn, trạng thái màn, thuật ngữ, hợp đồng FE"),
+        "compliance-officer": ("Tuân thủ", "quyền được phép, đồng ý, dữ liệu cá nhân, điều khoản bên thứ ba"),
+        "product-director": ("Giám đốc sản phẩm (TẠO, ⛔ gate)", "BE: làm gì, quy tắc, máy trạng thái, hợp đồng API, nghiệm thu"),
+        "design-director": ("Giám đốc thiết kế (TẠO, ⛔ gate)", "FE: hệ thiết kế, màn, trạng thái, câu chữ"),
+        "execution-lead": ("Đường tiền (gói fintech)", "vùng T: ý định → định tuyến → bộ dịch, sổ lệnh, tiền"),
+        "quant-lead": ("Công thức (gói fintech)", "vùng F: đúng sách, số vàng độc lập, tất định"),
+        "domain-auditor": ("Kiểm toán công thức (gói fintech)", "chỉ đọc: tái hiện số độc lập, phân loại ĐÚNG/SAI/BỊA/CHẾT"),
+        "data-integrity": ("Dữ liệu (gói data_pipeline)", "nguồn đã chốt, hổng/trùng, phân vùng, giới hạn gọi API"),
+    },
+    "en": {
+        "chief-architect": ("Architecture", "master gate: phases/slices, architecture, services, DDL, process changes, session close, ASSIGNMENT"),
+        "qa-lead": ("QA", "tests with teeth: negative cases, mutants by zone, manifests, budgets"),
+        "security-lead": ("Security", "zone K: secrets, keys, authentication, authorization, audit"),
+        "ux-gate": ("Product/UX", "safe operation, screen states, terminology, FE contract"),
+        "compliance-officer": ("Compliance", "what is permitted, consent, personal data, third-party terms"),
+        "product-director": ("Product director (CREATOR, not a gate)", "BE: what, rules, state machines, API contracts, acceptance"),
+        "design-director": ("Design director (CREATOR, not a gate)", "FE: design system, screens, states, copy"),
+        "execution-lead": ("Money path (fintech pack)", "zone T: intent → routing → translator, order book, money"),
+        "quant-lead": ("Formulas (fintech pack)", "zone F: true to the book, independent golden numbers, determinism"),
+        "domain-auditor": ("Formula audit (fintech pack)", "read-only: independent recomputation, RIGHT/WRONG/INVENTED/DEAD"),
+        "data-integrity": ("Data (data_pipeline pack)", "finalised sources, gaps/duplicates, partitioning, API rate limits"),
+    },
+}
+WORDS = {
+    "vi": {"packs": " · gói ", "ledger_row": "sổ làn `{name}` (`{prefix}-L/D/C/N`) | mỗi phán"},
+    "en": {"packs": " · packs ", "ledger_row": "lane `{name}` ledgers (`{prefix}-L/D/C/N`) | every verdict"},
 }
 GATES = ["chief-architect", "qa-lead", "security-lead", "ux-gate", "compliance-officer",
          "execution-lead", "quant-lead", "data-integrity"]
@@ -38,40 +61,84 @@ def _undot(rel: str) -> str:
     return "/".join("." + part[4:] if part.startswith("dot-") else part for part in rel.split("/"))
 
 
-def _tpl() -> Path:
-    return Path(str(resources.files("gatekit") / "templates"))
+def doc_lang(cfg: Config) -> str:
+    """Ngôn ngữ bộ mẫu: `project.docs_language` nếu khai, ngược lại `project.language` nếu có mẫu, ngược lại `en`."""
+    explicit = cfg.data["project"].get("docs_language") or ""
+    if explicit:
+        return explicit
+    lang = cfg.data["project"]["language"]
+    return lang if lang in TEMPLATE_LANGS else "en"
+
+
+def _tpl(lang: str) -> Path:
+    return Path(str(resources.files("gatekit") / "templates" / lang))
 
 
 def _packs_root() -> Path:
     return Path(str(resources.files("gatekit") / "packs"))
 
 
-def config_toml(name: str, level: str, packs: list[str], language: str, lanes: list[tuple[str, str]]) -> str:
+TOML_TEXT = {
+    "vi": {
+        "head": "# gatekit.toml — NGUỒN DUY NHẤT của tham số quy trình. Sửa tệp này = sửa quy trình ⇒ qua gate chief-architect.",
+        "language": "ngôn ngữ agent giao tiếp",
+        "docs_language": "ngôn ngữ bộ mẫu tài liệu (vi | en); để trống = theo language",
+        "prod": "mã SẢN XUẤT — commit chạm 0 tệp khớp ⇒ lát QUẢN TRỊ",
+        "max_code_slices": "lát MÃ đang viết cùng lúc",
+        "id_regex": 'mã lát trong tiêu đề commit: "feat: … [S-12]"',
+        "zones": "Vùng rủi ro: quyết HÌNH THỨC kiểm (GATE_PROTOCOL §4). Khai theo mã thật của dự án.",
+        "T": "thao tác KHÔNG đảo ngược: gửi lệnh, ghi tiền, xoá dữ liệu người dùng",
+        "K": "bí mật · khoá · xác thực · quyền xem",
+        "F": "công thức · quy tắc quyết định nghiệp vụ",
+        "eg": "vd", "grep": "regex trên dòng THÊM của diff",
+        "hotpath": "đường nóng có bench (GATE_PROTOCOL §5)",
+    },
+    "en": {
+        "head": "# gatekit.toml — the SINGLE SOURCE of process parameters. Editing this file = changing the process ⇒ chief-architect gate.",
+        "language": "language agents communicate in",
+        "docs_language": "language of the document templates (vi | en); empty = follow language",
+        "prod": "PRODUCTION code — a commit touching 0 matching files ⇒ GOVERNANCE slice",
+        "max_code_slices": "CODE slices being written at the same time",
+        "id_regex": 'slice id in the commit subject: "feat: … [S-12]"',
+        "zones": "Risk zones: decide the FORM of testing (GATE_PROTOCOL §4). Declare them for the project's real code.",
+        "T": "IRREVERSIBLE actions: sending orders, booking money, deleting user data",
+        "K": "secrets · keys · authentication · data visibility",
+        "F": "formulas · business decision rules",
+        "eg": "e.g.", "grep": "regex over ADDED lines of the diff",
+        "hotpath": "hot paths that have a bench (GATE_PROTOCOL §5)",
+    },
+}
+
+
+def config_toml(name: str, level: str, packs: list[str], language: str, lanes: list[tuple[str, str]],
+                docs_language: str = "") -> str:
+    t = TOML_TEXT[docs_language or (language if language in TEMPLATE_LANGS else "en")]
     lane_lines = "\n".join(
         f'[[ledger.lanes]]\nname = "{n}"\nprefix = "{p}"\ndir = "docs/ledger{"" if i == 0 else "/" + n}"\n'
         for i, (n, p) in enumerate(lanes))
     packs_s = ", ".join(f'"{p}"' for p in packs)
-    return f'''# gatekit.toml — NGUỒN DUY NHẤT của tham số quy trình. Sửa tệp này = sửa quy trình ⇒ qua gate chief-architect.
+    return f'''{t["head"]}
 
 [project]
 name = "{name}"
 level = "{level}"          # lite | standard | regulated
-language = "{language}"    # ngôn ngữ agent giao tiếp
+language = "{language}"    # {t["language"]}
+docs_language = "{docs_language}"   # {t["docs_language"]}
 packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline
 
 [paths]
-# mã SẢN XUẤT — commit chạm 0 tệp khớp ⇒ lát QUẢN TRỊ
+# {t["prod"]}
 prod = ['^src/', '^app/']
 
 [session]
-max_code_slices = 5        # lát MÃ đang viết cùng lúc
+max_code_slices = 5        # {t["max_code_slices"]}
 max_agents = 8
 worktree_per_slice = true
 governance_slice_max = 1
 code_slices_after_governance = 2
 
 [slices]
-id_regex = '\\[(?P<id>[A-Za-z][\\w.\\-]*)\\]'   # mã lát trong tiêu đề commit: "feat: … [S-12]"
+id_regex = '\\[(?P<id>[A-Za-z][\\w.\\-]*)\\]'   # {t["id_regex"]}
 
 [ledger]
 range_primary = 20
@@ -79,20 +146,20 @@ range_co = 10
 roll_keep_days = 60
 
 {lane_lines}
-# ── Vùng rủi ro: quyết HÌNH THỨC kiểm (GATE_PROTOCOL §4). Khai theo mã thật của dự án. ──
+# ── {t["zones"]} ──
 [zones.T]
-label = "thao tác KHÔNG đảo ngược: gửi lệnh, ghi tiền, xoá dữ liệu người dùng"
-paths = []                 # vd ['^src/(payments|orders)/', '^src/billing/ledger\\.py$']
-grep = []                  # regex trên dòng THÊM của diff
+label = "{t["T"]}"
+paths = []                 # {t["eg"]} ['^src/(payments|orders)/', '^src/billing/ledger\\.py$']
+grep = []                  # {t["grep"]}
 
 [zones.K]
-label = "bí mật · khoá · xác thực · quyền xem"
+label = "{t["K"]}"
 paths = ['(^|/)(auth|identity|secrets?|permissions?)/']
 grep = ['\\b(GRANT|REVOKE|POLICY)\\b']
 
 [zones.F]
-label = "công thức · quy tắc quyết định nghiệp vụ"
-paths = []                 # vd ['^src/pricing/', '^src/indicators/']
+label = "{t["F"]}"
+paths = []                 # {t["eg"]} ['^src/pricing/', '^src/indicators/']
 grep = []
 
 [tests]
@@ -104,7 +171,7 @@ mutant_seconds = 6
 mutants_total_seconds = 600
 
 [hotpath]
-paths = []                 # đường nóng có bench (GATE_PROTOCOL §5)
+paths = []                 # {t["hotpath"]}
 ratio = 1.25
 runs = 5
 max_seconds = 180
@@ -119,7 +186,7 @@ partition_column = "provider"
 # providers = {{ stripe = ["stripe"], paypal = ["paypal"] }}
 
 [packs.legacy_upgrade]
-legacy_modules = []        # vd ["legacy_app", "@old/core"]
+legacy_modules = []        # {t["eg"]} ["legacy_app", "@old/core"]
 label_prefix = "source: LEGACY@"
 
 [packs.postgres]
@@ -160,19 +227,21 @@ def agent_names(cfg: Config) -> list[str]:
 
 def values_for(cfg: Config) -> dict[str, str]:
     d = cfg.data
+    lang = doc_lang(cfg)
+    roles, words = AGENT_ROLE[lang], WORDS[lang]
     lanes = cfg.lanes()
     agents = agent_names(cfg)
-    rows = "\n".join(f"| {AGENT_ROLE[a][0]} | `{a}` | {AGENT_ROLE[a][1]} |" for a in agents)
+    rows = "\n".join(f"| {roles[a][0]} | `{a}` | {roles[a][1]} |" for a in agents)
     ledger_rows = "" if cfg.level == "lite" else "".join(
-        f"| `{ln['dir']}/{{LEDGER,DECISIONS,DEBT}}.md` | sổ làn `{ln['name']}` (`{ln['prefix']}-L/D/C/N`) | mỗi phán |\n"
+        f"| `{ln['dir']}/{{LEDGER,DECISIONS,DEBT}}.md` | {words['ledger_row'].format(name=ln['name'], prefix=ln['prefix'])} |\n"
         for ln in lanes)
     i18n = cfg.pack("i18n")
-    common = (_tpl() / "partials" / "gate_common.md").read_text(encoding="utf-8")
+    common = (_tpl(lang) / "partials" / "gate_common.md").read_text(encoding="utf-8")
     return {
         "PROJECT": d["project"]["name"],
         "LEVEL": cfg.level,
         "LANGUAGE": d["project"]["language"],
-        "PACKS_SUFFIX": (" · gói " + ", ".join(cfg.packs)) if cfg.packs else "",
+        "PACKS_SUFFIX": (words["packs"] + ", ".join(cfg.packs)) if cfg.packs else "",
         "DATE": dt.date.today().isoformat(),
         "MAX_CODE_SLICES": str(d["session"]["max_code_slices"]),
         "MAX_AGENTS": str(d["session"]["max_agents"]),
@@ -202,7 +271,8 @@ def values_for(cfg: Config) -> dict[str, str]:
 def plan(cfg: Config) -> dict[str, str]:
     """Đường dẫn đích → nội dung đã render."""
     out: dict[str, str] = {}
-    files = _tpl() / "files"
+    lang = doc_lang(cfg)
+    files = _tpl(lang) / "files"
     for p in sorted(files.rglob("*")):
         if not p.is_file():
             continue
@@ -211,12 +281,12 @@ def plan(cfg: Config) -> dict[str, str]:
             continue
         out[rel] = render(p.read_text(encoding="utf-8"), cfg)
     for a in agent_names(cfg):
-        src = _tpl() / "agents" / f"{a}.md"
+        src = _tpl(lang) / "agents" / f"{a}.md"
         if not src.exists():
-            src = next(_packs_root().glob(f"*/agents/{a}.md"))
+            src = next(_packs_root().glob(f"*/{lang}/agents/{a}.md"))
         out[f".claude/agents/{a}.md"] = render(src.read_text(encoding="utf-8"), cfg)
     for pack in cfg.packs:
-        pf = _packs_root() / pack / "files"
+        pf = _packs_root() / pack / lang / "files"
         if pf.is_dir():
             for p in sorted(pf.rglob("*")):
                 if p.is_file():
@@ -229,12 +299,13 @@ def plan(cfg: Config) -> dict[str, str]:
         for ln in cfg.lanes():
             extra = {"LANE_NAME": ln["name"], "LANE_PREFIX": ln["prefix"]}
             for f in ("LEDGER.md", "DECISIONS.md", "DEBT.md"):
-                out[f"{ln['dir']}/{f}"] = render((_tpl() / "lane" / f).read_text(encoding="utf-8"), cfg, extra)
+                out[f"{ln['dir']}/{f}"] = render((_tpl(lang) / "lane" / f).read_text(encoding="utf-8"), cfg, extra)
     return out
 
 
 def init(root: Path, *, name: str, level: str, packs: list[str], language: str = "vi",
-         lanes: list[tuple[str, str]] | None = None, force: bool = False) -> tuple[list[str], list[str]]:
+         lanes: list[tuple[str, str]] | None = None, force: bool = False,
+         docs_language: str = "") -> tuple[list[str], list[str]]:
     root = root.resolve()
     lanes = lanes or [("core", "P")]
     written, skipped = [], []
@@ -242,7 +313,7 @@ def init(root: Path, *, name: str, level: str, packs: list[str], language: str =
     if cfg_path.exists() and not force:
         skipped.append(CONFIG_NAME)
     else:
-        cfg_path.write_text(config_toml(name, level, packs, language, lanes), encoding="utf-8")
+        cfg_path.write_text(config_toml(name, level, packs, language, lanes, docs_language), encoding="utf-8")
         written.append(CONFIG_NAME)
     import tomllib
     with cfg_path.open("rb") as f:

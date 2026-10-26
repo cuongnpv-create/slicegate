@@ -6,7 +6,7 @@ sổ phán append-only, máy gác chạy ở hook, **đột biến theo vùng r�
 Rút ra từ một dự án thật — nền tảng giao dịch đa sàn, nhiều agent chạy song song — rồi tách phần **cơ chế** (dùng
 chung) khỏi phần **nội dung** riêng dự án. Mọi tham số dự án nằm ở một tệp `gatekit.toml`.
 
-> Trạng thái: `0.1.0` — bộ LÕI + 6 gói ngành. Tài liệu mẫu tiếng Việt; định danh trong mã tiếng Anh.
+> Trạng thái: `0.1.0` — bộ LÕI + 6 gói ngành. Bộ mẫu tài liệu **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
 
 ## Vì sao
 
@@ -30,8 +30,21 @@ gatekit hooks install
 gatekit check --full
 ```
 
+Dự án tiếng Anh: `gatekit init --name "MyApp" --language en` (hoặc giữ agent nói tiếng Việt nhưng tài liệu tiếng Anh:
+`--language vi --docs-language en`).
+
 Sau `init`: điền `CLAUDE.md §1/§2/§7`, khai `[zones]` trong `gatekit.toml` theo mã thật, rồi mở phiên điều phối bằng
 `docs/governance/COORDINATOR_PROMPT.md`.
+
+## Ngôn ngữ
+
+| Tham số | Nghĩa |
+|---|---|
+| `project.language` | ngôn ngữ agent giao tiếp (bất kỳ, vd `vi`, `en`, `ja`) |
+| `project.docs_language` | ngôn ngữ bộ mẫu tài liệu: `vi` · `en`; để trống = theo `language` nếu có mẫu, ngược lại `en` |
+
+Bộ mẫu nằm ở `templates/<vi|en>/` và `packs/<gói>/<vi|en>/`. Test `test_template_parity` bắt buộc hai bộ song song:
+cùng tập tệp, cùng chỗ giữ `{{…}}`, bản `en` không sót tiếng Việt.
 
 ## Mức dùng
 
@@ -70,7 +83,7 @@ gatekit report      tổng hợp (hook SessionStart dùng bản --brief)
 ## gatekit tự gác chính nó
 
 Repo này chạy chính gatekit (`gatekit.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`gatekit check --full` XANH · 54 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
+`gatekit check --full` XANH · 76 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
 (vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
 
 Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về
@@ -85,15 +98,15 @@ src/gatekit/
   tools/               ledger · debt · slice_quota · risk_zone · guard_hygiene
   qa/mutants.py        đột biến trên bản sao, chọn theo diff, kiểm neo
   scaffold.py          gatekit init (mẫu {{KEY}}, {{#level …}}, {{#pack …}})
-  templates/           CLAUDE.md · governance/ · ledger theo làn · agent lõi · hook
-  packs/               agent + tài liệu của gói ngành
+  templates/<vi|en>/   CLAUDE.md · governance/ · ledger theo làn · agent lõi · hook
+  packs/<gói>/<vi|en>/ agent + tài liệu của gói ngành
 tests/                 pytest
 mutants/               bộ đột biến của chính gatekit
 ```
 
 ## Lộ trình
 
-- Mẫu tiếng Anh (`--language en` hiện chỉ đổi ngôn ngữ agent giao tiếp, tài liệu mẫu vẫn tiếng Việt).
+- Thông báo của dòng lệnh và guard theo ngôn ngữ dự án (hiện vẫn tiếng Việt).
 - Đóng gói thành plugin Claude Code (agent + hook + lệnh) bên cạnh gói pip.
 - Thêm gói: `mobile`, `saas_multitenant`, `ecommerce` (vùng T: thanh toán, hoàn tiền), `healthcare`.
 - Bảng điều khiển đọc sổ phán / điều kiện OPEN / nhật ký guard.
