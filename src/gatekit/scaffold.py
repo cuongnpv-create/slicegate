@@ -34,6 +34,8 @@ AGENT_ROLE = {
         "data-integrity": ("Dữ liệu (gói data_pipeline)", "nguồn đã chốt, hổng/trùng, phân vùng, giới hạn gọi API"),
         "checkout-lead": ("Thanh toán & đơn hàng (gói ecommerce)", "vùng T: máy trạng thái đơn, thanh toán, webhook, hoàn tiền, giữ hàng"),
         "pricing-lead": ("Giá & khuyến mãi (gói ecommerce)", "vùng F: giá, giảm giá, thuế, phí ship, làm tròn, tiền tệ"),
+        "tenancy-lead": ("Cách ly khách thuê (gói saas_multitenant)", "vùng K: ngữ cảnh tenant, truy vấn, cache, job, quản trị đăng nhập hộ, xuất/xoá dữ liệu"),
+        "billing-lead": ("Gói cước & tính tiền (gói saas_multitenant)", "vùng T/F: đăng ký, nâng/hạ gói, pro-rata, đo lượng dùng, giới hạn gói"),
     },
     "en": {
         "chief-architect": ("Architecture", "master gate: phases/slices, architecture, services, DDL, process changes, session close, ASSIGNMENT"),
@@ -49,6 +51,8 @@ AGENT_ROLE = {
         "data-integrity": ("Data (data_pipeline pack)", "finalised sources, gaps/duplicates, partitioning, API rate limits"),
         "checkout-lead": ("Checkout & orders (ecommerce pack)", "zone T: order state machine, payments, webhooks, refunds, stock reservation"),
         "pricing-lead": ("Pricing & promotions (ecommerce pack)", "zone F: prices, discounts, tax, shipping fees, rounding, currency"),
+        "tenancy-lead": ("Tenant isolation (saas_multitenant pack)", "zone K: tenant context, queries, caches, jobs, admin impersonation, data export/deletion"),
+        "billing-lead": ("Plans & billing (saas_multitenant pack)", "zone T/F: subscriptions, upgrades/downgrades, proration, metering, plan limits"),
     },
 }
 WORDS = {
@@ -56,7 +60,8 @@ WORDS = {
     "en": {"packs": " · packs ", "ledger_row": "lane `{name}` ledgers (`{prefix}-L/D/C/N`) | every verdict"},
 }
 GATES = ["chief-architect", "qa-lead", "security-lead", "ux-gate", "compliance-officer",
-         "execution-lead", "quant-lead", "data-integrity", "checkout-lead", "pricing-lead"]
+         "execution-lead", "quant-lead", "data-integrity", "checkout-lead", "pricing-lead",
+         "tenancy-lead", "billing-lead"]
 LITE_SKIP = {"docs/governance/SESSION_PROTOCOL.md", "docs/governance/COORDINATOR_PROMPT.md"}
 
 
@@ -99,6 +104,7 @@ TOML_TEXT = {
         "eco_money": "từ đánh dấu TÊN TIỀN cho guard money_float (mặc định: price, amount, total, tax, fee…)",
         "eco_nonmoney": "từ loại trừ (weight, qty, rate, percent…)",
         "eco_card": "regex tên trường dữ liệu thẻ cho guard pci_scope",
+        "rls": "true = mọi bảng tenant phải bật Row Level Security + có policy (Postgres)",
     },
     "en": {
         "head": "# gatekit.toml — the SINGLE SOURCE of process parameters. Editing this file = changing the process ⇒ chief-architect gate.",
@@ -116,6 +122,7 @@ TOML_TEXT = {
         "eco_money": "words marking a MONEY name for the money_float guard (default: price, amount, total, tax, fee…)",
         "eco_nonmoney": "words that exclude it (weight, qty, rate, percent…)",
         "eco_card": "regex of card-data field names for the pci_scope guard",
+        "rls": "true = every tenant table must enable Row Level Security + have a policy (Postgres)",
     },
 }
 
@@ -134,7 +141,7 @@ name = "{name}"
 level = "{level}"          # lite | standard | regulated
 language = "{language}"    # {t["language"]}
 docs_language = "{docs_language}"   # {t["docs_language"]}
-packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce
+packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce · saas_multitenant
 
 [paths]
 # {t["prod"]}
@@ -204,6 +211,10 @@ label_prefix = "source: LEGACY@"
 # non_money_words = [...]   # {t["eco_nonmoney"]}
 # card_names = '…'          # {t["eco_card"]}
 
+[packs.saas_multitenant]
+tenant_column = "tenant_id"
+require_rls = false        # {t["rls"]}
+
 [packs.postgres]
 migrations_dir = "db/migrations"
 lock_file = "db/migrations.lock"
@@ -239,6 +250,8 @@ def agent_names(cfg: Config) -> list[str]:
         names += ["data-integrity"]
     if "ecommerce" in cfg.packs:
         names += ["checkout-lead", "pricing-lead"]
+    if "saas_multitenant" in cfg.packs:
+        names += ["tenancy-lead", "billing-lead"]
     return names
 
 

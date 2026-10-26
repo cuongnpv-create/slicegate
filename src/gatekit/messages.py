@@ -148,6 +148,11 @@ CATALOG: dict[str, dict[str, str]] = {
         "money.parse_float": "`parseFloat({name})` — tiền dùng thư viện thập phân hoặc số nguyên đơn vị nhỏ nhất",
         "pci.column": "cột `{name}` lưu dữ liệu thẻ — chỉ lưu token + last4 + hãng thẻ; CVV ⛔ bao giờ lưu",
         "pci.field": "trường `{name}` ({cls}) giữ dữ liệu thẻ — chỉ lưu token + last4 + hãng thẻ; CVV ⛔ bao giờ lưu",
+        # ── tenant_scope · tenant_rls ──
+        "tenant.ddl": "bảng `{table}` thiếu cột `{column}` (∨ chú thích `-- tenant: global <lý do>` cho bảng dùng chung)",
+        "tenant.query": "truy vấn chạm bảng tenant `{tables}` mà không lọc `{column}` (∨ `tenant-scope: ignore <lý do>`)",
+        "rls.not_enabled": "bảng tenant `{table}` chưa `ENABLE ROW LEVEL SECURITY`",
+        "rls.no_policy": "bảng tenant `{table}` chưa có `CREATE POLICY` nào",
         # ── migration_scope ──
         "migration.unpinned": "migration chưa ghim — `gatekit migrations lock` sau khi gate duyệt",
         "migration.edited": "migration ĐÃ GHIM bị sửa byte — viết migration mới thay vì sửa",
@@ -299,6 +304,11 @@ CATALOG: dict[str, dict[str, str]] = {
         "money.parse_float": "`parseFloat({name})` — use a decimal library or integer minor units for money",
         "pci.column": "column `{name}` stores card data — store only token + last4 + card brand; never store CVV",
         "pci.field": "field `{name}` ({cls}) holds card data — store only token + last4 + card brand; never store CVV",
+        # ── tenant_scope · tenant_rls ──
+        "tenant.ddl": "table `{table}` lacks column `{column}` (∨ comment `-- tenant: global <reason>` for a shared table)",
+        "tenant.query": "query touches tenant table `{tables}` without filtering on `{column}` (∨ `tenant-scope: ignore <reason>`)",
+        "rls.not_enabled": "tenant table `{table}` does not `ENABLE ROW LEVEL SECURITY`",
+        "rls.no_policy": "tenant table `{table}` has no `CREATE POLICY`",
         # ── migration_scope ──
         "migration.unpinned": "migration not pinned — `gatekit migrations lock` after the gate approves",
         "migration.edited": "a PINNED migration was edited — write a new migration instead",

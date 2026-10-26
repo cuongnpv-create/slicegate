@@ -53,3 +53,9 @@ kèm ngày.
 Tiền là số nguyên đơn vị nhỏ nhất hoặc thập phân chính xác, luôn đi kèm tiền tệ; ⛔ số thực dấu phẩy động. Tổng các
 dòng = tổng đơn = số thu = số ghi sổ. Dữ liệu thẻ không nằm trong hệ (chỉ token). Máy chặn: `money_float`, `pci_scope`.
 {{/pack}}
+{{#pack saas_multitenant}}
+
+## Điều 13 — Khách thuê là tường minh
+Mỗi request, mỗi job, mỗi khoá cache và mỗi dòng dữ liệu khách thuộc đúng một tenant, lấy từ phiên đã xác thực. Truy vấn
+không lọc tenant là lỗi, kể cả khi id khó đoán. Máy chặn: `tenant_scope`, `tenant_rls`.
+{{/pack}}

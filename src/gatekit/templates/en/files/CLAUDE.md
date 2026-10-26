@@ -34,6 +34,7 @@ The `SessionStart` hook prints: the latest STATUS block, open conditions, git st
 {{/pack}}{{#pack legacy_upgrade}}- **Legacy upgrade:** never import legacy code; bringing it over = copy with a source label `{{LEGACY_LABEL}}<rev>:<file>:<line>` right above the copied block + tests in the new system. Enforced by: `legacy_import_ban`. Guide: `docs/governance/LEGACY_UPGRADE_GUIDE.md`.
 {{/pack}}{{#pack postgres}}- **Migrations:** a pinned migration is never edited — write a new one; numbering is contiguous. Enforced by: `migration_scope`.
 {{/pack}}{{#pack ecommerce}}- **E-commerce:** money is integer minor units or Decimal, never float; never store card numbers / CVV. Enforced by: `money_float`, `pci_scope`. Industry rules: `docs/governance/ECOMMERCE_GUIDE.md`.
+{{/pack}}{{#pack saas_multitenant}}- **Multi-tenant SaaS:** tenant context only from the authenticated session; every customer-data table has the tenant column, every query filters by tenant; caches / jobs / storage carry the tenant. Enforced by: `tenant_scope`, `tenant_rls`. Industry rules: `docs/governance/SAAS_GUIDE.md`.
 {{/pack}}
 
 ---

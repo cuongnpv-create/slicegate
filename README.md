@@ -6,7 +6,7 @@ sổ phán append-only, máy gác chạy ở hook, **đột biến theo vùng r�
 Rút ra từ một dự án thật — nền tảng giao dịch đa sàn, nhiều agent chạy song song — rồi tách phần **cơ chế** (dùng
 chung) khỏi phần **nội dung** riêng dự án. Mọi tham số dự án nằm ở một tệp `gatekit.toml`.
 
-> Trạng thái: `0.2.0` — bộ LÕI + 7 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
+> Trạng thái: `0.2.0` — bộ LÕI + 8 gói ngành. Tài liệu mẫu, thông báo dòng lệnh và guard: **tiếng Việt và tiếng Anh**; định danh trong mã tiếng Anh.
 
 ## Vì sao
 
@@ -95,6 +95,7 @@ hai ngôn ngữ song song: cùng tập tệp / khoá, cùng chỗ giữ / tham s
 | `fintech` | agent `execution-lead` (vùng T), `quant-lead` (vùng F), `domain-auditor` |
 | `data_pipeline` | agent `data-integrity` |
 | `ecommerce` | guard `money_float` (tiền ⛔ float — Python, SQL, `parseFloat`), `pci_scope` (⛔ lưu số thẻ / CVV) · agent `checkout-lead` (vùng T: đơn, thanh toán, webhook, hoàn tiền, tồn kho), `pricing-lead` (vùng F: giá, khuyến mãi, thuế, làm tròn) · `ECOMMERCE_GUIDE.md` (vùng gợi ý, luật cứng, bộ đột biến mẫu) · Điều 12 "Tiền là chính xác" |
+| `saas_multitenant` | guard `tenant_scope` (bảng có cột tenant; mọi câu SQL trong mã chạm bảng tenant phải lọc tenant — Python, JS/TS, Go, Java…, tệp `.sql`), `tenant_rls` (bật `require_rls`: bảng tenant phải bật Row Level Security + có policy) · agent `tenancy-lead` (vùng K: ngữ cảnh tenant, cache, job, đăng nhập hộ, xuất/xoá dữ liệu), `billing-lead` (vùng T/F: đăng ký, pro-rata, đo lượng dùng, giới hạn gói) · `SAAS_GUIDE.md` (mô hình cách ly, vùng gợi ý, test chéo tenant, bộ đột biến mẫu) · Điều 13 "Khách thuê là tường minh" |
 
 ## Lệnh
 
@@ -114,7 +115,7 @@ gatekit report      tổng hợp (hook SessionStart dùng bản --brief)
 ## gatekit tự gác chính nó
 
 Repo này chạy chính gatekit (`gatekit.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`gatekit check --full` XANH · 232 test pytest · **14/14 đột biến bị giết** trên các guard và luật quyết định
+`gatekit check --full` XANH · 242 test pytest · **17/17 đột biến bị giết** trên các guard và luật quyết định
 (vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
 
 Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về
@@ -148,7 +149,7 @@ mutants/               bộ đột biến của chính gatekit
 
 ## Lộ trình
 
-- Thêm gói: `mobile`, `saas_multitenant`, `healthcare`.
+- Thêm gói: `mobile`, `healthcare`.
 - Bảng điều khiển đọc sổ phán / điều kiện OPEN / nhật ký guard.
 
 ## Giấy phép

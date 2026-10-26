@@ -34,6 +34,7 @@ Hook `SessionStart` in sẵn: khối đầu STATUS, điều kiện còn mở, tr
 {{/pack}}{{#pack legacy_upgrade}}- **Nâng cấp hệ cũ:** ⛔ import mã hệ cũ; mang sang = chép có ghi nguồn `{{LEGACY_LABEL}}<rev>:<tệp>:<dòng>` ngay trên khối chép + test ở hệ mới. Máy chặn: `legacy_import_ban`. Hướng dẫn: `docs/governance/LEGACY_UPGRADE_GUIDE.md`.
 {{/pack}}{{#pack postgres}}- **Migration:** migration đã ghim ⛔ sửa — viết migration mới; số thứ tự liên tục. Máy chặn: `migration_scope`.
 {{/pack}}{{#pack ecommerce}}- **Thương mại điện tử:** tiền là số nguyên đơn vị nhỏ nhất hoặc Decimal, ⛔ float; ⛔ lưu số thẻ / CVV. Máy chặn: `money_float`, `pci_scope`. Luật ngành: `docs/governance/ECOMMERCE_GUIDE.md`.
+{{/pack}}{{#pack saas_multitenant}}- **SaaS nhiều khách thuê:** ngữ cảnh tenant chỉ từ phiên đã xác thực; mọi bảng dữ liệu khách có cột tenant, mọi truy vấn lọc tenant; cache / job / lưu trữ mang tenant. Máy chặn: `tenant_scope`, `tenant_rls`. Luật ngành: `docs/governance/SAAS_GUIDE.md`.
 {{/pack}}
 
 ---

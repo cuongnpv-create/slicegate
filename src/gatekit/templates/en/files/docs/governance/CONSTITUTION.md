@@ -53,3 +53,9 @@ A capability has 4 values `YES · NO · UNKNOWN · EMULATED`; `UNKNOWN ≠ NO`. 
 Money is integer minor units or exact decimals, always with its currency; never floating point. Sum of lines = order
 total = charged = booked. Card data never lives in the system (tokens only). Enforced by: `money_float`, `pci_scope`.
 {{/pack}}
+{{#pack saas_multitenant}}
+
+## Article 13 — The tenant is explicit
+Every request, job, cache key and customer-data row belongs to exactly one tenant, taken from the authenticated session.
+A query without a tenant filter is a defect, even when ids are hard to guess. Enforced by: `tenant_scope`, `tenant_rls`.
+{{/pack}}

@@ -316,7 +316,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--name")
     p.add_argument("--level", default="standard", choices=["lite", "standard", "regulated"])
     p.add_argument("--pack", action="append", choices=["i18n", "multi_provider", "legacy_upgrade", "postgres",
-                                                       "fintech", "data_pipeline", "ecommerce"])
+                                                       "fintech", "data_pipeline", "ecommerce",
+                                                       "saas_multitenant"])
     p.add_argument("--lane", action="append", help=t("cli.help_lane"))
     p.add_argument("--language", default="vi", help=t("cli.help_language"))
     p.add_argument("--docs-language", default="", choices=["", "vi", "en"],
