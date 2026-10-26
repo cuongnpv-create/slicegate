@@ -19,7 +19,7 @@ The `gatekit` command is on your PATH (it comes with this plugin). Talk to the u
 - **Level** — `lite` (1 person, small app: architect + QA gates only) · `standard` (team / parallel agents, ledgers per
   lane) · `regulated` (money, health, sensitive data: adds compliance).
 - **Packs** (multi-select, recommend from what you saw): `i18n` · `multi_provider` · `legacy_upgrade` · `postgres` ·
-  `fintech` · `data_pipeline`.
+  `fintech` · `data_pipeline` · `ecommerce` (shops: payments, orders, refunds, pricing).
 - **Languages** — the language agents talk in (`--language`) and the document templates (`--docs-language vi|en`).
 - **Lanes** (standard/regulated only) — e.g. one lane `core:P`, or `core:P be:PB fe:PF` when BE and FE run in parallel.
 

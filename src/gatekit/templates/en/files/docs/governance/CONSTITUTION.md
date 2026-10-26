@@ -47,3 +47,9 @@ translator does the rest. Compare MEANING (reason codes), never a provider's raw
 ## Article 11 — Unknown is not No
 A capability has 4 values `YES · NO · UNKNOWN · EMULATED`; `UNKNOWN ≠ NO`. Override a library's declaration only with a dated measurement.
 {{/pack}}
+{{#pack ecommerce}}
+
+## Article 12 — Money is exact
+Money is integer minor units or exact decimals, always with its currency; never floating point. Sum of lines = order
+total = charged = booked. Card data never lives in the system (tokens only). Enforced by: `money_float`, `pci_scope`.
+{{/pack}}

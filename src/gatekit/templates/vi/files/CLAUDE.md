@@ -33,6 +33,7 @@ Hook `SessionStart` in sẵn: khối đầu STATUS, điều kiện còn mở, tr
 {{/pack}}{{#pack multi_provider}}- **Đa nhà cung cấp:** tên nhà cung cấp chỉ trong bộ chuyển của nó; mọi bảng mang cột phân vùng. Máy chặn: `provider_name_scope`, `partition_key_scope`.
 {{/pack}}{{#pack legacy_upgrade}}- **Nâng cấp hệ cũ:** ⛔ import mã hệ cũ; mang sang = chép có ghi nguồn `{{LEGACY_LABEL}}<rev>:<tệp>:<dòng>` ngay trên khối chép + test ở hệ mới. Máy chặn: `legacy_import_ban`. Hướng dẫn: `docs/governance/LEGACY_UPGRADE_GUIDE.md`.
 {{/pack}}{{#pack postgres}}- **Migration:** migration đã ghim ⛔ sửa — viết migration mới; số thứ tự liên tục. Máy chặn: `migration_scope`.
+{{/pack}}{{#pack ecommerce}}- **Thương mại điện tử:** tiền là số nguyên đơn vị nhỏ nhất hoặc Decimal, ⛔ float; ⛔ lưu số thẻ / CVV. Máy chặn: `money_float`, `pci_scope`. Luật ngành: `docs/governance/ECOMMERCE_GUIDE.md`.
 {{/pack}}
 
 ---

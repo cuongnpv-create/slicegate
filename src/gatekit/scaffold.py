@@ -32,6 +32,8 @@ AGENT_ROLE = {
         "quant-lead": ("Công thức (gói fintech)", "vùng F: đúng sách, số vàng độc lập, tất định"),
         "domain-auditor": ("Kiểm toán công thức (gói fintech)", "chỉ đọc: tái hiện số độc lập, phân loại ĐÚNG/SAI/BỊA/CHẾT"),
         "data-integrity": ("Dữ liệu (gói data_pipeline)", "nguồn đã chốt, hổng/trùng, phân vùng, giới hạn gọi API"),
+        "checkout-lead": ("Thanh toán & đơn hàng (gói ecommerce)", "vùng T: máy trạng thái đơn, thanh toán, webhook, hoàn tiền, giữ hàng"),
+        "pricing-lead": ("Giá & khuyến mãi (gói ecommerce)", "vùng F: giá, giảm giá, thuế, phí ship, làm tròn, tiền tệ"),
     },
     "en": {
         "chief-architect": ("Architecture", "master gate: phases/slices, architecture, services, DDL, process changes, session close, ASSIGNMENT"),
@@ -45,6 +47,8 @@ AGENT_ROLE = {
         "quant-lead": ("Formulas (fintech pack)", "zone F: true to the book, independent golden numbers, determinism"),
         "domain-auditor": ("Formula audit (fintech pack)", "read-only: independent recomputation, RIGHT/WRONG/INVENTED/DEAD"),
         "data-integrity": ("Data (data_pipeline pack)", "finalised sources, gaps/duplicates, partitioning, API rate limits"),
+        "checkout-lead": ("Checkout & orders (ecommerce pack)", "zone T: order state machine, payments, webhooks, refunds, stock reservation"),
+        "pricing-lead": ("Pricing & promotions (ecommerce pack)", "zone F: prices, discounts, tax, shipping fees, rounding, currency"),
     },
 }
 WORDS = {
@@ -52,7 +56,7 @@ WORDS = {
     "en": {"packs": " · packs ", "ledger_row": "lane `{name}` ledgers (`{prefix}-L/D/C/N`) | every verdict"},
 }
 GATES = ["chief-architect", "qa-lead", "security-lead", "ux-gate", "compliance-officer",
-         "execution-lead", "quant-lead", "data-integrity"]
+         "execution-lead", "quant-lead", "data-integrity", "checkout-lead", "pricing-lead"]
 LITE_SKIP = {"docs/governance/SESSION_PROTOCOL.md", "docs/governance/COORDINATOR_PROMPT.md"}
 
 
@@ -92,6 +96,9 @@ TOML_TEXT = {
         "F": "công thức · quy tắc quyết định nghiệp vụ",
         "eg": "vd", "grep": "regex trên dòng THÊM của diff",
         "hotpath": "đường nóng có bench (GATE_PROTOCOL §5)",
+        "eco_money": "từ đánh dấu TÊN TIỀN cho guard money_float (mặc định: price, amount, total, tax, fee…)",
+        "eco_nonmoney": "từ loại trừ (weight, qty, rate, percent…)",
+        "eco_card": "regex tên trường dữ liệu thẻ cho guard pci_scope",
     },
     "en": {
         "head": "# gatekit.toml — the SINGLE SOURCE of process parameters. Editing this file = changing the process ⇒ chief-architect gate.",
@@ -106,6 +113,9 @@ TOML_TEXT = {
         "F": "formulas · business decision rules",
         "eg": "e.g.", "grep": "regex over ADDED lines of the diff",
         "hotpath": "hot paths that have a bench (GATE_PROTOCOL §5)",
+        "eco_money": "words marking a MONEY name for the money_float guard (default: price, amount, total, tax, fee…)",
+        "eco_nonmoney": "words that exclude it (weight, qty, rate, percent…)",
+        "eco_card": "regex of card-data field names for the pci_scope guard",
     },
 }
 
@@ -124,7 +134,7 @@ name = "{name}"
 level = "{level}"          # lite | standard | regulated
 language = "{language}"    # {t["language"]}
 docs_language = "{docs_language}"   # {t["docs_language"]}
-packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline
+packs = [{packs_s}]        # i18n · multi_provider · legacy_upgrade · postgres · fintech · data_pipeline · ecommerce
 
 [paths]
 # {t["prod"]}
@@ -189,6 +199,11 @@ partition_column = "provider"
 legacy_modules = []        # {t["eg"]} ["legacy_app", "@old/core"]
 label_prefix = "source: LEGACY@"
 
+[packs.ecommerce]
+# money_words = [...]       # {t["eco_money"]}
+# non_money_words = [...]   # {t["eco_nonmoney"]}
+# card_names = '…'          # {t["eco_card"]}
+
 [packs.postgres]
 migrations_dir = "db/migrations"
 lock_file = "db/migrations.lock"
@@ -222,6 +237,8 @@ def agent_names(cfg: Config) -> list[str]:
         names += ["execution-lead", "quant-lead", "domain-auditor"]
     if "data_pipeline" in cfg.packs:
         names += ["data-integrity"]
+    if "ecommerce" in cfg.packs:
+        names += ["checkout-lead", "pricing-lead"]
     return names
 
 

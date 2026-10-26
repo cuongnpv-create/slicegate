@@ -75,6 +75,13 @@ DEFAULTS: dict[str, Any] = {
         "multi_provider": {"adapter_dir": "src/providers/{name}", "providers": {},
                            "partition_column": "provider", "sql_globs": [r"\.sql$"]},
         "legacy_upgrade": {"legacy_modules": [], "label_prefix": "source: LEGACY@"},
+        "ecommerce": {
+            "money_words": ["price", "prices", "amount", "amounts", "total", "subtotal", "tax", "vat", "fee", "fees",
+                            "discount", "balance", "cost", "refund", "charge", "payout", "tip", "shipping"],
+            "non_money_words": ["weight", "qty", "quantity", "count", "rate", "percent", "pct", "ratio", "score",
+                                "items", "pages", "size", "length", "width", "height", "days", "seconds", "ms"],
+            "card_names": r"(?i)(card_?number|card_?no|pan|cvv2?|cvc2?|card_?cvc|card_?cvv|track_?data|track[12]|magstripe)",
+        },
         "postgres": {"migrations_dir": "db/migrations", "lock_file": "db/migrations.lock",
                      "pattern": r"^(?P<n>\d{4})_[\w\-]+\.sql$"},
     },
