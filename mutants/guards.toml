@@ -64,3 +64,24 @@ file = "src/gatekit/guards/pci_scope.py"
 find = "                if rx.fullmatch(m.group(\"col\")):"
 replace = "                if False:"
 why = "cột SQL lưu số thẻ / CVV lọt qua"
+
+[[mutant]]
+id = "tenant-01"
+file = "src/gatekit/guards/tenant_scope.py"
+find = "            if not hit or col.search(sql):"
+replace = "            if True:"
+why = "guard không còn bắt truy vấn quên lọc tenant ⇒ rò dữ liệu chéo khách thuê lọt qua"
+
+[[mutant]]
+id = "tenant-02"
+file = "src/gatekit/guards/tenant_scope.py"
+find = "            if _IGNORE.search(near):"
+replace = "            if True:"
+why = "miễn trừ nuốt mọi phát hiện"
+
+[[mutant]]
+id = "rls-01"
+file = "src/gatekit/guards/tenant_rls.py"
+find = "        if tb not in policies:"
+replace = "        if False:"
+why = "bật RLS mà không có policy vẫn XANH (RLS không policy = chặn hết hoặc bị bỏ qua bởi chủ bảng)"

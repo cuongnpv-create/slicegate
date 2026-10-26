@@ -82,6 +82,11 @@ DEFAULTS: dict[str, Any] = {
                                 "items", "pages", "size", "length", "width", "height", "days", "seconds", "ms"],
             "card_names": r"(?i)(card_?number|card_?no|pan|cvv2?|cvc2?|card_?cvc|card_?cvv|track_?data|track[12]|magstripe)",
         },
+        "saas_multitenant": {
+            "tenant_column": "tenant_id",
+            "migrations_regex": r"(^|/)migrations?/",
+            "require_rls": False,
+        },
         "postgres": {"migrations_dir": "db/migrations", "lock_file": "db/migrations.lock",
                      "pattern": r"^(?P<n>\d{4})_[\w\-]+\.sql$"},
     },
