@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# pre-commit — slicegate. FAST: only FAST guards. fail-CLOSED: slicegate missing / guard RED / error ⇒ commit blocked.
+# Client-side only (`--no-verify` bypasses it) — pre-push and CI guard again; project rules forbid --no-verify.
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+SLICEGATE_BIN="${SLICEGATE_BIN:-}"
+if command -v slicegate >/dev/null 2>&1; then GK=(slicegate)
+elif [ -n "$SLICEGATE_BIN" ] && [ -x "$SLICEGATE_BIN" ]; then GK=("$SLICEGATE_BIN")
+elif python3 -c "import slicegate" 2>/dev/null; then GK=(python3 -m slicegate)
+else echo "pre-commit: 🔴 slicegate not found (pip install it, or re-run `slicegate hooks install` from the plugin)"; exit 1; fi
+"${GK[@]}" check --fast || { echo "pre-commit: 🔴 slicegate check --fast RED"; exit 1; }

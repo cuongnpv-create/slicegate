@@ -1,17 +1,17 @@
 ---
 name: init
-description: Set up the gatekit gated development process in the current repository — interview the owner (level, packs, languages, ledger lanes), run `gatekit init`, then fill in the project-specific parts (CLAUDE.md §1/§2/§7, risk zones) from the real code. Use when the user asks to install, adopt or set up gatekit in a project.
+description: Set up the slicegate gated development process in the current repository — interview the owner (level, packs, languages, ledger lanes), run `slicegate init`, then fill in the project-specific parts (CLAUDE.md §1/§2/§7, risk zones) from the real code. Use when the user asks to install, adopt or set up slicegate in a project.
 argument-hint: "[project name]"
-allowed-tools: Bash(gatekit:*) Bash(git:*) Read Grep Glob Edit Write AskUserQuestion
+allowed-tools: Bash(slicegate:*) Bash(git:*) Read Grep Glob Edit Write AskUserQuestion
 ---
 
-# Set up gatekit in this repository
+# Set up slicegate in this repository
 
-The `gatekit` command is on your PATH (it comes with this plugin). Talk to the user in their language.
+The `slicegate` command is on your PATH (it comes with this plugin). Talk to the user in their language.
 
 ## 1. Check the ground
 - `git rev-parse --show-toplevel` — must be a git repository; if not, ask before running `git init`.
-- If `gatekit.toml` already exists, gatekit is installed: stop and offer `/gatekit:check` instead. `gatekit init` never
+- If `slicegate.toml` already exists, slicegate is installed: stop and offer `/slicegate:check` instead. `slicegate init` never
   overwrites files, but do not run it twice by accident.
 - Survey the repo briefly (top-level dirs, languages, test runner, DB migrations, i18n catalogs, payment/auth code).
 
@@ -27,12 +27,12 @@ Project name: `$ARGUMENTS` if given, else the repository directory name.
 
 ## 3. Install
 ```bash
-gatekit init --name "<name>" --level <level> [--pack <p> ...] --language <lang> [--docs-language <vi|en>] [--lane name:PREFIX ...]
-gatekit hooks install
+slicegate init --name "<name>" --level <level> [--pack <p> ...] --language <lang> [--docs-language <vi|en>] [--lane name:PREFIX ...]
+slicegate hooks install
 ```
 
 ## 4. Make it the project's own (do this yourself, from the real code — do not leave placeholders)
-- `gatekit.toml`
+- `slicegate.toml`
   - `[paths] prod` — regexes for production code dirs.
   - `[zones.T]` — irreversible actions (payments, orders, deletes); `[zones.K]` — auth, secrets, permissions;
     `[zones.F]` — formulas / decision rules. Use real paths you found; show the user the list.
@@ -41,10 +41,10 @@ gatekit hooks install
 - `tests/manifest.tsv` — one line per existing test file or glob, with lane and tier.
 
 ## 5. Prove it
-- `gatekit check --full` must be GREEN. Typical first-run reds and the right fix:
+- `slicegate check --full` must be GREEN. Typical first-run reds and the right fix:
   - `test_wiring` — add the tests to `tests/manifest.tsv`;
-  - `naming_scope` on legacy code — list existing names in `.gatekit/naming_baseline.txt` (it can only shrink);
-  - `migration_scope` — `gatekit migrations lock` after reviewing the migrations;
-  - `secret_leak` — fix the leak; allowlist (`.gatekit/secret_allowlist.txt`) only with a reason.
-- Commit everything as one governance slice, e.g. `chore: install gatekit [G-1]`.
-- Tell the user: what was installed, what you filled in, and that `/gatekit:coordinator` starts a coordinator session.
+  - `naming_scope` on legacy code — list existing names in `.slicegate/naming_baseline.txt` (it can only shrink);
+  - `migration_scope` — `slicegate migrations lock` after reviewing the migrations;
+  - `secret_leak` — fix the leak; allowlist (`.slicegate/secret_allowlist.txt`) only with a reason.
+- Commit everything as one governance slice, e.g. `chore: install slicegate [G-1]`.
+- Tell the user: what was installed, what you filled in, and that `/slicegate:coordinator` starts a coordinator session.

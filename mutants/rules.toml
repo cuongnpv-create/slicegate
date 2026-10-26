@@ -4,35 +4,35 @@ cmd = "PYTHONPATH=src python3 -m pytest -q -x tests/test_git_tools.py tests/test
 
 [[mutant]]
 id = "quota-01"
-file = "src/gatekit/tools/slice_quota.py"
+file = "src/slicegate/tools/slice_quota.py"
 find = "        if run > gmax:"
 replace = "        if False:"
 why = "chuỗi lát quản trị liền nhau không bị chặn"
 
 [[mutant]]
 id = "zone-01"
-file = "src/gatekit/tools/risk_zone.py"
+file = "src/slicegate/tools/risk_zone.py"
 find = "    for z in ORDER:\n            if self.files.get(z) or self.grep_hits.get(z):\n                return z"
 replace = "    for z in ():\n            if self.files.get(z) or self.grep_hits.get(z):\n                return z"
 why = "lát chạm tiền bị xếp vùng 'khác' ⇒ không đòi đột biến thường trực"
 
 [[mutant]]
 id = "ledger-01"
-file = "src/gatekit/tools/ledger.py"
+file = "src/slicegate/tools/ledger.py"
 find = "    start, end = top + 1, top + count"
 replace = "    start, end = top, top + count - 1"
 why = "cấp lại số đã dùng ⇒ hai phán cùng mã"
 
 [[mutant]]
 id = "roll-01"
-file = "src/gatekit/tools/ledger.py"
+file = "src/slicegate/tools/ledger.py"
 find = "        if closed and today - d > keep:"
 replace = "        if today - d > keep:"
 why = "cuộn cả entry còn điều kiện OPEN ra khỏi sổ sống ⇒ gate không thấy điều kiện mở"
 
 [[mutant]]
 id = "mut-01"
-file = "src/gatekit/qa/mutants.py"
+file = "src/slicegate/qa/mutants.py"
 find = "            status = \"TIMEOUT\" if rc is None else (\"KILLED\" if rc != 0 else \"SURVIVED\")"
 replace = "            status = \"KILLED\""
 why = "đột biến sống bị báo là đã giết ⇒ test rỗng qua cổng"

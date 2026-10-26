@@ -1,26 +1,26 @@
 ---
 name: gate
-description: Prepare a gatekit gate package (G-IN before writing code, G-OUT before merging, or G-DECIDE for a question) for the current slice, send it to the right gate agent, and record the verdict in the lane ledger. Use when the user asks for a gate review, G-IN, G-OUT, or approval of a slice.
+description: Prepare a slicegate gate package (G-IN before writing code, G-OUT before merging, or G-DECIDE for a question) for the current slice, send it to the right gate agent, and record the verdict in the lane ledger. Use when the user asks for a gate review, G-IN, G-OUT, or approval of a slice.
 argument-hint: "<G-IN|G-OUT|G-DECIDE> <slice-id> [lane]"
-allowed-tools: Bash(gatekit:*) Bash(git:*) Read Grep Glob Edit Write Agent
+allowed-tools: Bash(slicegate:*) Bash(git:*) Read Grep Glob Edit Write Agent
 ---
 
 # Run a gate for a slice
 
 Rules live in the project's `docs/governance/GATE_PROTOCOL.md` — read §1–§4 first. Arguments: `$ARGUMENTS`
-(kind, slice id, optional lane; default lane = the first in `gatekit.toml`). Talk to the user in the project's language.
+(kind, slice id, optional lane; default lane = the first in `slicegate.toml`). Talk to the user in the project's language.
 
 ## 1. Measure (paste real output, never summaries)
 - `git rev-parse --short HEAD`, current branch, `git diff --stat main...HEAD` (or the slice's base).
-- `gatekit zone --base main` — heaviest zone and the form of testing it requires (T/K/F/other). T/K files without a
+- `slicegate zone --base main` — heaviest zone and the form of testing it requires (T/K/F/other). T/K files without a
   permanent mutant suite are RED here: fix that before G-OUT.
-- For G-OUT: test output of the lane's tiers, `gatekit check --full`, and `gatekit mutants run --changed main` log.
-- `gatekit ledger open` — open conditions that touch this slice.
+- For G-OUT: test output of the lane's tiers, `slicegate check --full`, and `slicegate mutants run --changed main` log.
+- `slicegate ledger open` — open conditions that touch this slice.
 
 ## 2. Allocate numbers (the gate never picks its own)
 ```bash
-gatekit ledger alloc --lane <lane> --kind L --count 1 --owner coordinator --note "<slice-id> <kind>"
-gatekit ledger alloc --lane <lane> --kind C --count 20 --owner coordinator --note "<slice-id> primary gate"
+slicegate ledger alloc --lane <lane> --kind L --count 1 --owner coordinator --note "<slice-id> <kind>"
+slicegate ledger alloc --lane <lane> --kind C --count 20 --owner coordinator --note "<slice-id> primary gate"
 ```
 
 ## 3. Choose the gate

@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .slicegate/hooks/session_start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

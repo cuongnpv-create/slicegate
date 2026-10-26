@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from gatekit.config import from_dict
-from gatekit.guards import all_guards, enabled_guards
+from slicegate.config import from_dict
+from slicegate.guards import all_guards, enabled_guards
 
 GUARDS = all_guards()
 

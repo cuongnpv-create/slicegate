@@ -4,9 +4,9 @@ import re
 
 import pytest
 
-from gatekit.cli import main
-from gatekit.config import load
-from gatekit.scaffold import init
+from slicegate.cli import main
+from slicegate.config import load
+from slicegate.scaffold import init
 
 ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline", "ecommerce", "saas_multitenant", "healthcare", "logistics"]
 
@@ -84,7 +84,7 @@ def test_docs_language_selection(repo, language, docs, expect):
     assert expect in (repo / "CLAUDE.md").read_text(encoding="utf-8")
     assert f"Communicate in `{language}`" in (repo / ".claude/agents/execution-lead.md").read_text(encoding="utf-8") \
         or f"Giao tiếp bằng `{language}`" in (repo / ".claude/agents/execution-lead.md").read_text(encoding="utf-8")
-    toml = (repo / "gatekit.toml").read_text(encoding="utf-8")
+    toml = (repo / "slicegate.toml").read_text(encoding="utf-8")
     assert ("SINGLE SOURCE" in toml) == ("Process for every slice" == expect)
 
 
@@ -103,3 +103,23 @@ def test_init_seeds_manifest_from_existing_tests(repo):
     assert "tests/unit/test_*.py\tbe\t1" in man and man.count("tests/unit/") == 1
     assert "tests/test_*.py\tbe\t1" in man and "web/src/*.test.ts\tbe\t1" in man
     assert main(["--root", str(repo), "check"]) == 0
+
+
+def test_migrate_from_gatekit(repo, capsys):
+    """Dự án cài từ thời tên gatekit chuyển sang slicegate một lần: tên tệp, thư mục, hook, settings."""
+    init(repo, name="demo", level="lite", packs=[])
+    import subprocess
+    (repo / "slicegate.toml").rename(repo / "gatekit.toml")
+    (repo / ".slicegate").rename(repo / ".gatekit")
+    (repo / ".gatekit/hooks/pre-commit").write_text("#!/bin/sh\ngatekit check --fast\n", encoding="utf-8")
+    settings = repo / ".claude/settings.json"
+    settings.write_text(settings.read_text(encoding="utf-8").replace(".slicegate/", ".gatekit/"), encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)
+    assert main(["--root", str(repo), "migrate"]) == 0
+    assert (repo / "slicegate.toml").exists() and not (repo / "gatekit.toml").exists()
+    assert (repo / ".slicegate/hooks").is_dir() and not (repo / ".gatekit").exists()
+    assert "gatekit" not in (repo / ".slicegate/hooks/pre-commit").read_text(encoding="utf-8")
+    assert ".gatekit/" not in settings.read_text(encoding="utf-8")
+    assert "gatekit" not in (repo / ".git/hooks/pre-commit").read_text(encoding="utf-8")
+    assert main(["--root", str(repo), "migrate"]) == 0   # chạy lại: không có gì để chuyển
+    assert not load(repo).legacy

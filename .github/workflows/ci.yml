@@ -17,6 +17,6 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install -e . pytest
       - run: python -m pytest -q
-      - run: gatekit selftest --all
-      - run: gatekit check --full
-      - run: gatekit mutants run
+      - run: slicegate selftest --all
+      - run: slicegate check --full
+      - run: slicegate mutants run

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# pre-push — slicegate. ĐỦ: selftest mọi guard (ca âm) + check toàn cây + neo đột biến + số sổ trùng.
+# fail-CLOSED: guard ĐỎ hoặc không chạy được ⇒ chặn push.
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+SLICEGATE_BIN="${SLICEGATE_BIN:-}"
+if command -v slicegate >/dev/null 2>&1; then GK=(slicegate)
+elif [ -n "$SLICEGATE_BIN" ] && [ -x "$SLICEGATE_BIN" ]; then GK=("$SLICEGATE_BIN")
+elif python3 -c "import slicegate" 2>/dev/null; then GK=(python3 -m slicegate)
+else echo "pre-push: 🔴 không tìm thấy slicegate (cài pip, hoặc chạy lại `slicegate hooks install` từ plugin)"; exit 1; fi
+"${GK[@]}" selftest >/dev/null || { "${GK[@]}" selftest; echo "pre-push: 🔴 selftest ĐỎ"; exit 1; }
+"${GK[@]}" check --full || { echo "pre-push: 🔴 slicegate check --full ĐỎ"; exit 1; }

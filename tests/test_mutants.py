@@ -4,9 +4,9 @@ import sys
 
 import pytest
 
-from gatekit.cli import main
-from gatekit.config import from_dict
-from gatekit.qa import mutants as mq
+from slicegate.cli import main
+from slicegate.config import from_dict
+from slicegate.qa import mutants as mq
 from tests.conftest import commit, write
 
 APP = "def can_withdraw(balance, amount):\n    if amount <= 0:\n        return False\n    return amount <= balance\n"
@@ -83,7 +83,7 @@ def test_select(tmp_path):
 
 
 def test_cli_zone_requires_permanent_suite_for_T(repo):
-    write(repo, "gatekit.toml", '[zones.T]\npaths = ["^app\\\\.py$"]\ngrep = []\n')
+    write(repo, "slicegate.toml", '[zones.T]\npaths = ["^app\\\\.py$"]\ngrep = []\n')
     base = commit(repo, "init [S-0]", {"README.md": "x\n"})
     commit(repo, "feat [S-1]", {"app.py": APP})
     assert main(["--root", str(repo), "zone", "--base", base]) == 1      # chưa có bộ đột biến

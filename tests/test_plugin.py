@@ -1,8 +1,8 @@
-"""Gói plugin Claude Code: manifest, marketplace, skill, lệnh bin/gatekit, hook.
+"""Gói plugin Claude Code: manifest, marketplace, skill, lệnh bin/slicegate, hook.
 
 Khuyết tật chặn: phát hành plugin mà manifest lệch phiên bản / tên với marketplace (cài báo "not found"), skill thiếu
-mô tả (Claude không biết khi nào dùng), lệnh `gatekit` của plugin không chạy được khi không pip install, git hook
-không tìm thấy gatekit ngoài Claude Code (commit lọt qua cổng hoặc bị chặn oan).
+mô tả (Claude không biết khi nào dùng), lệnh `slicegate` của plugin không chạy được khi không pip install, git hook
+không tìm thấy slicegate ngoài Claude Code (commit lọt qua cổng hoặc bị chặn oan).
 """
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from pathlib import Path
 
 import pytest
 
-from gatekit import __version__
+from slicegate import __version__
 
 ROOT = Path(__file__).resolve().parents[1]
-BIN = ROOT / "bin" / "gatekit"
+BIN = ROOT / "bin" / "slicegate"
 HOOK = ROOT / "hooks" / "session_start.sh"
 CLEAN_PATH = "/usr/bin:/bin"
 
@@ -34,7 +34,7 @@ def run(cmd, cwd, env_extra=None, path=CLEAN_PATH):
 def test_manifests_agree():
     plugin = json.loads((ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
     market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
-    assert plugin["name"] == "gatekit" and plugin["version"] == __version__
+    assert plugin["name"] == "slicegate" and plugin["version"] == __version__
     entry = next(p for p in market["plugins"] if p["name"] == plugin["name"])
     assert entry["source"] == "./" and entry["version"] == __version__
     assert market["owner"]["name"]
@@ -66,25 +66,25 @@ def test_bin_runs_without_install(tmp_path):
 def test_plugin_session_hook(repo):
     env = {"CLAUDE_PLUGIN_ROOT": str(ROOT), "CLAUDE_PROJECT_DIR": str(repo)}
     r = run([str(HOOK)], repo, env)
-    assert r.returncode == 0 and r.stdout == "", "dự án chưa cài gatekit ⇒ im lặng"
+    assert r.returncode == 0 and r.stdout == "", "dự án chưa cài slicegate ⇒ im lặng"
     run([sys.executable, str(BIN), "init", "--name", "Demo", "--language", "en", "--level", "lite"], repo)
     r = run([str(HOOK)], repo, env)
     assert r.returncode == 0 and "OPEN conditions" in r.stdout
 
 
-def test_git_hook_finds_plugin_gatekit(repo, tmp_path):
-    """Ngoài Claude Code: không có `gatekit` trên PATH, python3 không import được gatekit ⇒ hook dùng GATEKIT_BIN."""
+def test_git_hook_finds_plugin_slicegate(repo, tmp_path):
+    """Ngoài Claude Code: không có `slicegate` trên PATH, python3 không import được slicegate ⇒ hook dùng SLICEGATE_BIN."""
     run([sys.executable, str(BIN), "init", "--name", "Demo", "--language", "en", "--level", "lite"], repo)
-    r = run([sys.executable, str(BIN), "hooks", "install"], repo, {"GATEKIT_ENTRY": str(BIN)})
+    r = run([sys.executable, str(BIN), "hooks", "install"], repo, {"SLICEGATE_ENTRY": str(BIN)})
     assert r.returncode == 0
-    assert f'GATEKIT_BIN="${{GATEKIT_BIN:-{BIN}}}"' in (repo / ".git/hooks/pre-commit").read_text(encoding="utf-8")
+    assert f'SLICEGATE_BIN="${{SLICEGATE_BIN:-{BIN}}}"' in (repo / ".git/hooks/pre-commit").read_text(encoding="utf-8")
     fake = tmp_path / "fakebin"
     fake.mkdir()
-    # python3 giả: chỉ chạy được bin/gatekit (qua sys.executable thật), ⛔ import gatekit từ site-packages
+    # python3 giả: chỉ chạy được bin/slicegate (qua sys.executable thật), ⛔ import slicegate từ site-packages
     (fake / "python3").write_text(f'#!/bin/sh\nif [ "$1" = "-c" ]; then exit 1; fi\nexec {sys.executable} "$@"\n')
     (fake / "python3").chmod(0o755)
     path = f"{fake}:{CLEAN_PATH}"
-    assert shutil.which("gatekit", path=path) is None
+    assert shutil.which("slicegate", path=path) is None
     run(["git", "add", "-A"], repo, path=path)
     assert run(["git", "commit", "-qm", "init [G-1]"], repo, path=path).returncode == 0
     (repo / "src").mkdir()
