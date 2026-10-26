@@ -5,9 +5,30 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "slicegate"
 version = "0.3.0"
-description = "Quy trình phát triển phần mềm có cổng duyệt (gate) cho đội agent AI — lát, sổ phán, máy gác, đột biến theo vùng rủi ro."
+description = "Gated development process for teams of AI coding agents: slices, gates, verdict ledgers, guards in git hooks, mutation testing by risk zone."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "Nguyễn Cường"}]
 requires-python = ">=3.11"
 dependencies = []
+keywords = ["ai-agents", "claude-code", "quality-gates", "mutation-testing", "governance", "code-review"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+
+[project.urls]
+Homepage = "https://github.com/cuongnpv-create/slicegate"
+Repository = "https://github.com/cuongnpv-create/slicegate"
+Issues = "https://github.com/cuongnpv-create/slicegate/issues"
 
 [project.scripts]
 slicegate = "slicegate.cli:main"

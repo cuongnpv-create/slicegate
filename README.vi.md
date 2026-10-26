@@ -34,8 +34,6 @@ hai phiên song song giẫm nhau · quy trình phình to hơn phần mã. sliceg
 ```
 Claude Code 2.1.275 trở lên cài được một bước: `/plugin install slicegate --marketplace cuongnpv-create/slicegate`
 (ngoài phiên: `claude plugin marketplace add cuongnpv-create/slicegate && claude plugin install slicegate@slicegate`).
-Repo private ⇒ máy cài phải có quyền đọc repo trên GitHub.
-
 Plugin mang theo:
 
 | Thành phần | Dùng |
@@ -174,4 +172,4 @@ mutants/               bộ đột biến của chính slicegate
 
 ## Giấy phép
 
-Chưa chọn — mặc định giữ toàn quyền tác giả.
+[MIT](LICENSE).

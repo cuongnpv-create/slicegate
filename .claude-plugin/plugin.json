@@ -6,5 +6,6 @@
   "author": { "name": "Nguyễn Cường", "url": "https://github.com/cuongnpv-create" },
   "homepage": "https://github.com/cuongnpv-create/slicegate",
   "repository": "https://github.com/cuongnpv-create/slicegate",
+  "license": "MIT",
   "keywords": ["process", "governance", "code-review", "mutation-testing", "agents", "quality-gates"]
 }
