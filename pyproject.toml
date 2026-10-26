@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gatekit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Quy trình phát triển phần mềm có cổng duyệt (gate) cho đội agent AI — lát, sổ phán, máy gác, đột biến theo vùng rủi ro."
 requires-python = ">=3.11"
 dependencies = []

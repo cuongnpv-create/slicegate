@@ -9,8 +9,8 @@ if [ -f docs/STATUS.md ]; then
   awk '/^## S[0-9]+ /{n++} n==1{print} n>1{exit}' docs/STATUS.md | head -20
   echo
 fi
-if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
-"${GK[@]}" report --brief 2>/dev/null || echo "(gatekit not installed — pip install gatekit)"
+# No gatekit on PATH (e.g. only the Claude Code plugin is installed) ⇒ skip; the plugin's SessionStart hook prints it.
+if command -v gatekit >/dev/null 2>&1; then gatekit report --brief 2>/dev/null; fi
 echo
 echo "── 🌿 GIT ──"
 echo "   branch: $(git branch --show-current 2>/dev/null) · HEAD $(git rev-parse --short HEAD 2>/dev/null)"

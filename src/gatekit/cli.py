@@ -272,7 +272,11 @@ def cmd_hooks(args: argparse.Namespace) -> int:
         if not (src / name).exists():
             _p(t("cli.missing_hook", path=src / name))
             return 2
-        shutil.copy2(src / name, dst / name)
+        body = (src / name).read_text(encoding="utf-8")
+        entry = os.environ.get("GATEKIT_ENTRY")   # chạy từ plugin: ghi đường dẫn lệnh vào hook (git không có PATH plugin)
+        if entry:
+            body = body.replace('GATEKIT_BIN="${GATEKIT_BIN:-}"', f'GATEKIT_BIN="${{GATEKIT_BIN:-{entry}}}"')
+        (dst / name).write_text(body, encoding="utf-8")
         (dst / name).chmod(0o755)
         _p(t("cli.hook_installed", name=name))
     return 0

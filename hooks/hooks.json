@@ -1,0 +1,15 @@
+{
+  "description": "gatekit: in tóm tắt trạng thái quy trình khi mở phiên trong dự án đã cài gatekit / print the process status at session start in projects using gatekit.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+"""Lệnh `gatekit` của plugin Claude Code — chạy mã trong `src/` của chính plugin, ⛔ cần pip install.
+
+Chỉ dùng thư viện chuẩn (Python ≥ 3.11). GATEKIT_ENTRY cho `gatekit hooks install` biết đường dẫn này để ghi vào
+git hook (git hook chạy ngoài Claude Code, không có PATH của plugin).
+"""
+import os
+import sys
+
+if sys.version_info < (3, 11):
+    sys.exit(f"gatekit cần Python ≥ 3.11 / gatekit needs Python ≥ 3.11 (đang có / found {sys.version.split()[0]})")
+HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "src"))
+os.environ.setdefault("GATEKIT_ENTRY", os.path.realpath(__file__))
+
+from gatekit.cli import main  # noqa: E402
+
+sys.exit(main())

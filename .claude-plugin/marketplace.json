@@ -1,0 +1,15 @@
+{
+  "name": "gatekit",
+  "owner": { "name": "Nguyễn Cường", "url": "https://github.com/cuongnpv-create" },
+  "description": "gatekit — gated development process for teams of AI agents.",
+  "plugins": [
+    {
+      "name": "gatekit",
+      "source": "./",
+      "description": "Gated development process for teams of AI agents: slices, gates, ledgers, guards, mutation testing by risk zone.",
+      "version": "0.2.0",
+      "category": "development",
+      "tags": ["process", "quality-gates", "mutation-testing"]
+    }
+  ]
+}

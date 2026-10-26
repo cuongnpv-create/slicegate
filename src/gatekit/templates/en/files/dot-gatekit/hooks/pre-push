@@ -3,6 +3,10 @@
 # fail-CLOSED: a guard RED or unable to run ⇒ push blocked.
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
-if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
+GATEKIT_BIN="${GATEKIT_BIN:-}"
+if command -v gatekit >/dev/null 2>&1; then GK=(gatekit)
+elif [ -n "$GATEKIT_BIN" ] && [ -x "$GATEKIT_BIN" ]; then GK=("$GATEKIT_BIN")
+elif python3 -c "import gatekit" 2>/dev/null; then GK=(python3 -m gatekit)
+else echo "pre-push: 🔴 gatekit not found (pip install it, or re-run `gatekit hooks install` from the plugin)"; exit 1; fi
 "${GK[@]}" selftest >/dev/null || { "${GK[@]}" selftest; echo "pre-push: 🔴 selftest RED"; exit 1; }
 "${GK[@]}" check --full || { echo "pre-push: 🔴 gatekit check --full RED"; exit 1; }

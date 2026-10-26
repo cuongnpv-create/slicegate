@@ -3,6 +3,10 @@
 # fail-CLOSED: guard ĐỎ hoặc không chạy được ⇒ chặn push.
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
-if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
+GATEKIT_BIN="${GATEKIT_BIN:-}"
+if command -v gatekit >/dev/null 2>&1; then GK=(gatekit)
+elif [ -n "$GATEKIT_BIN" ] && [ -x "$GATEKIT_BIN" ]; then GK=("$GATEKIT_BIN")
+elif python3 -c "import gatekit" 2>/dev/null; then GK=(python3 -m gatekit)
+else echo "pre-push: 🔴 không tìm thấy gatekit (cài pip, hoặc chạy lại `gatekit hooks install` từ plugin)"; exit 1; fi
 "${GK[@]}" selftest >/dev/null || { "${GK[@]}" selftest; echo "pre-push: 🔴 selftest ĐỎ"; exit 1; }
 "${GK[@]}" check --full || { echo "pre-push: 🔴 gatekit check --full ĐỎ"; exit 1; }

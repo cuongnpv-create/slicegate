@@ -1,0 +1,10 @@
+{
+  "name": "gatekit",
+  "displayName": "gatekit",
+  "version": "0.2.0",
+  "description": "Gated development process for teams of AI agents: small slices, independent gates, append-only verdict ledgers, guards in git hooks, mutation testing by risk zone (T/K/F). Templates and messages in English and Vietnamese.",
+  "author": { "name": "Nguyễn Cường", "url": "https://github.com/cuongnpv-create" },
+  "homepage": "https://github.com/cuongnpv-create/gatekit",
+  "repository": "https://github.com/cuongnpv-create/gatekit",
+  "keywords": ["process", "governance", "code-review", "mutation-testing", "agents", "quality-gates"]
+}
