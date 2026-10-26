@@ -8,7 +8,7 @@ from gatekit.cli import main
 from gatekit.config import load
 from gatekit.scaffold import init
 
-ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline"]
+ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline", "ecommerce"]
 
 
 @pytest.mark.parametrize("lang", ["vi", "en"])
@@ -26,6 +26,9 @@ def test_init_renders_clean(repo, level, packs, lang):
     assert set(cfg.agents()) <= set(agents)
     if "fintech" in packs:
         assert {"execution-lead", "quant-lead", "domain-auditor"} <= set(agents)
+    if "ecommerce" in packs:
+        assert {"checkout-lead", "pricing-lead"} <= set(agents)
+        assert (repo / "docs/governance/ECOMMERCE_GUIDE.md").exists()
     if level == "lite":
         assert not (repo / "docs/ledger/LEDGER.md").exists()
         assert not (repo / "docs/governance/SESSION_PROTOCOL.md").exists()

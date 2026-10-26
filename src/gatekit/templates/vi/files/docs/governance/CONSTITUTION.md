@@ -47,3 +47,9 @@ phần còn lại. So NGHĨA (mã lý do), ⛔ so mã lỗi thô của nhà cung
 Năng lực có 4 giá trị `YES · NO · UNKNOWN · EMULATED`; `UNKNOWN ≠ NO`. Ghi đè khai báo của thư viện chỉ khi có phép đo
 kèm ngày.
 {{/pack}}
+{{#pack ecommerce}}
+
+## Điều 12 — Tiền là chính xác
+Tiền là số nguyên đơn vị nhỏ nhất hoặc thập phân chính xác, luôn đi kèm tiền tệ; ⛔ số thực dấu phẩy động. Tổng các
+dòng = tổng đơn = số thu = số ghi sổ. Dữ liệu thẻ không nằm trong hệ (chỉ token). Máy chặn: `money_float`, `pci_scope`.
+{{/pack}}

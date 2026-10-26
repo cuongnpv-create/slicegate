@@ -43,3 +43,24 @@ file = "src/gatekit/guards/migration_scope.py"
 find = "        elif lock[name] != sha:"
 replace = "        elif False:"
 why = "sửa migration đã áp mà không bị bắt"
+
+[[mutant]]
+id = "money-01"
+file = "src/gatekit/guards/money_float.py"
+find = "    return bool(ws & money) and not (ws & not_money)"
+replace = "    return False"
+why = "guard không còn nhận ra tên tiền ⇒ cột/biến tiền kiểu float lọt qua"
+
+[[mutant]]
+id = "money-02"
+file = "src/gatekit/guards/money_float.py"
+find = "    return bool(ws & money) and not (ws & not_money)"
+replace = "    return bool(ws & money)"
+why = "bỏ danh sách loại trừ ⇒ total_weight / tax_rate bị báo nhầm, người dùng tắt guard"
+
+[[mutant]]
+id = "pci-01"
+file = "src/gatekit/guards/pci_scope.py"
+find = "                if rx.fullmatch(m.group(\"col\")):"
+replace = "                if False:"
+why = "cột SQL lưu số thẻ / CVV lọt qua"

@@ -140,6 +140,14 @@ CATALOG: dict[str, dict[str, str]] = {
         "partition.missing": "bảng `{table}` thiếu cột `{column}` (∨ chú thích `-- partition: global <lý do>`)",
         # ── legacy_import_ban ──
         "legacy.import": "import `{name}` từ hệ cũ `{legacy}` — chép có ghi nguồn thay vì import",
+        # ── money_float · pci_scope ──
+        "money.annotation": "`{name}` khai kiểu float — tiền dùng Decimal hoặc số nguyên đơn vị nhỏ nhất",
+        "money.returns": "hàm `{name}` trả float — tiền dùng Decimal hoặc số nguyên đơn vị nhỏ nhất",
+        "money.cast": "`float({name})` — ép tiền sang số thực làm lệch xu khi cộng/làm tròn",
+        "money.sql": "cột tiền `{name}` kiểu {type} — dùng NUMERIC(p,s) hoặc BIGINT đơn vị nhỏ nhất",
+        "money.parse_float": "`parseFloat({name})` — tiền dùng thư viện thập phân hoặc số nguyên đơn vị nhỏ nhất",
+        "pci.column": "cột `{name}` lưu dữ liệu thẻ — chỉ lưu token + last4 + hãng thẻ; CVV ⛔ bao giờ lưu",
+        "pci.field": "trường `{name}` ({cls}) giữ dữ liệu thẻ — chỉ lưu token + last4 + hãng thẻ; CVV ⛔ bao giờ lưu",
         # ── migration_scope ──
         "migration.unpinned": "migration chưa ghim — `gatekit migrations lock` sau khi gate duyệt",
         "migration.edited": "migration ĐÃ GHIM bị sửa byte — viết migration mới thay vì sửa",
@@ -283,6 +291,14 @@ CATALOG: dict[str, dict[str, str]] = {
         "partition.missing": "table `{table}` lacks column `{column}` (∨ comment `-- partition: global <reason>`)",
         # ── legacy_import_ban ──
         "legacy.import": "import `{name}` from the legacy system `{legacy}` — copy with a source label instead of importing",
+        # ── money_float · pci_scope ──
+        "money.annotation": "`{name}` is typed float — use Decimal or integer minor units for money",
+        "money.returns": "function `{name}` returns float — use Decimal or integer minor units for money",
+        "money.cast": "`float({name})` — casting money to floating point drifts cents when summing/rounding",
+        "money.sql": "money column `{name}` is {type} — use NUMERIC(p,s) or BIGINT minor units",
+        "money.parse_float": "`parseFloat({name})` — use a decimal library or integer minor units for money",
+        "pci.column": "column `{name}` stores card data — store only token + last4 + card brand; never store CVV",
+        "pci.field": "field `{name}` ({cls}) holds card data — store only token + last4 + card brand; never store CVV",
         # ── migration_scope ──
         "migration.unpinned": "migration not pinned — `gatekit migrations lock` after the gate approves",
         "migration.edited": "a PINNED migration was edited — write a new migration instead",
