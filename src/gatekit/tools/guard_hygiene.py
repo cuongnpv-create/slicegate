@@ -10,6 +10,7 @@ import datetime as dt
 from collections import Counter
 
 from gatekit.config import Config
+from gatekit.messages import t
 
 HEADER = "date\tkind\tsubject\tsource\tdescription\n"
 KINDS = ("guard-catch", "incident")
@@ -31,10 +32,10 @@ def rows(cfg: Config) -> list[dict]:
 
 def record(cfg: Config, kind: str, subject: str, source: str, description: str) -> None:
     if kind not in KINDS:
-        raise ValueError(f"kind ∈ {KINDS}")
+        raise ValueError(t("hygiene.bad_kind", kinds=KINDS))
     for v in (subject, source, description):
         if "\t" in v or "\n" in v:
-            raise ValueError("trường không được chứa tab/xuống dòng")
+            raise ValueError(t("hygiene.bad_field"))
     p = cfg.root / cfg["guard_log"]
     p.parent.mkdir(parents=True, exist_ok=True)
     if not p.exists():
@@ -47,11 +48,11 @@ def report(cfg: Config, guard_names: list[str]) -> str:
     rs = rows(cfg)
     catches = Counter(r["subject"] for r in rs if r["kind"] == "guard-catch")
     incidents = Counter(r["subject"] for r in rs if r["kind"] == "incident")
-    lines = ["Guard — số lần bắt lỗi thật:"]
+    lines = [t("hygiene.catches")]
     for g in sorted(set(guard_names) | set(catches)):
         lines.append(f"  {catches.get(g, 0):>3}  {g}")
-    lines.append(f"Lớp lỗi — số lần nổ (≥ {THRESHOLD} ⇒ đủ điều kiện đề xuất guard):")
+    lines.append(t("hygiene.incidents", n=THRESHOLD))
     for subj, n in incidents.most_common():
-        mark = "  ⇐ ĐỦ ĐIỀU KIỆN" if n >= THRESHOLD else ""
+        mark = t("hygiene.eligible") if n >= THRESHOLD else ""
         lines.append(f"  {n:>3}  {subj}{mark}")
     return "\n".join(lines)

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 from gatekit.config import Config
 from gatekit.guards._common import git
+from gatekit.messages import t
 
 _EXEMPT = re.compile(r"\[QUOTA-EXEMPT:\s*\S[^\]]*\]")
 
@@ -27,7 +28,7 @@ class Slice:
 
     @property
     def kind(self) -> str:
-        return "MÃ" if self.prod else "QUẢN TRỊ"
+        return t("quota.kind_code") if self.prod else t("quota.kind_gov")
 
 
 def slices(cfg: Config, since: str | None = None, ref: str = "HEAD") -> list[Slice]:
@@ -40,7 +41,7 @@ def slices(cfg: Config, since: str | None = None, ref: str = "HEAD") -> list[Sli
     for line in log:
         sha, _, subj = line.partition("\t")
         m = rx.search(subj)
-        sid = m.group("id") if m else f"(không mã) {sha[:8]}"
+        sid = m.group("id") if m else t("quota.no_id", sha=sha[:8])
         files = git(cfg.root, "diff-tree", "--no-commit-id", "--name-only", "-r", "--root", sha).splitlines()
         prod = any(cfg.is_prod(f) for f in files)
         if out and out[-1].id == sid and m:
@@ -68,9 +69,9 @@ def violations(cfg: Config, seq: list[Slice]) -> list[str]:
         if s.exempt:
             continue
         if run == 0 and code_since < need:
-            out.append(f"{s.id}: lát QUẢN TRỊ khi mới có {code_since}/{need} lát MÃ sau chuỗi quản trị trước")
+            out.append(t("quota.too_soon", id=s.id, have=code_since, need=need))
         run += 1
         code_since = 0
         if run > gmax:
-            out.append(f"{s.id}: {run} lát QUẢN TRỊ liền nhau (trần {gmax})")
+            out.append(t("quota.run", id=s.id, run=run, max=gmax))
     return out

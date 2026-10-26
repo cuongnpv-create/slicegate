@@ -30,7 +30,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from gatekit.config import Config
+from gatekit.messages import t
 
+ZONE_ALIASES = {"khác": "other"}   # bộ đột biến viết bằng nhãn tiếng Việt vẫn đọc được
 _IGNORE = shutil.ignore_patterns(".git", "node_modules", ".venv", "__pycache__", ".pytest_cache", ".claude")
 
 
@@ -67,10 +69,10 @@ def load_suites(cfg: Config) -> list[Suite]:
         for m in data.get("mutant", []):
             cmd = m.get("cmd", default_cmd)
             if not cmd:
-                raise ValueError(f"{rel}: đột biến {m.get('id')} thiếu cmd")
+                raise ValueError(t("mutants.no_cmd", suite=rel, id=m.get("id")))
             ms.append(Mutant(rel, m["id"], m["file"], m["find"], m["replace"], cmd, m.get("why", ""),
                              list(m.get("targets", [m["file"]]))))
-        out.append(Suite(rel, data.get("zone", "khác"), ms))
+        out.append(Suite(rel, ZONE_ALIASES.get(data.get("zone", "other"), data.get("zone", "other")), ms))
     return out
 
 
@@ -81,17 +83,17 @@ def anchor_problems(cfg: Config, suites: list[Suite] | None = None) -> list[str]
     for s in suites if suites is not None else load_suites(cfg):
         for m in s.mutants:
             if m.id in ids:
-                out.append(f"{s.path}: id `{m.id}` trùng với {ids[m.id]}")
+                out.append(t("mutants.dup_id", suite=s.path, id=m.id, other=ids[m.id]))
             ids[m.id] = s.path
             p = cfg.root / m.file
             if not p.exists():
-                out.append(f"{s.path}:{m.id}: tệp `{m.file}` không tồn tại")
+                out.append(t("mutants.no_file", suite=s.path, id=m.id, file=m.file))
                 continue
             n = p.read_text(encoding="utf-8").count(m.find)
             if n != 1:
-                out.append(f"{s.path}:{m.id}: neo xuất hiện {n} lần trong `{m.file}` (phải đúng 1)")
+                out.append(t("mutants.anchor_count", suite=s.path, id=m.id, n=n, file=m.file))
             if not m.why:
-                out.append(f"{s.path}:{m.id}: thiếu `why` — đột biến phải nói khuyết tật nó mô phỏng")
+                out.append(t("mutants.no_why", suite=s.path, id=m.id))
     return out
 
 
@@ -105,12 +107,12 @@ def select(suites: list[Suite], changed_files: list[str] | None, only: list[str]
                     picked.append(m)
                 continue
             if changed_files is None or s.path in changed_files or any(
-                    fnmatch.fnmatchcase(c, t) or c == t for c in changed_files for t in m.targets):
+                    fnmatch.fnmatchcase(c, tgt) or c == tgt for c in changed_files for tgt in m.targets):
                 picked.append(m)
     if only is not None:
         unknown = set(only) - {m.id for m in picked}
         if unknown:
-            raise ValueError(f"MUT_ONLY có mã lạ: {sorted(unknown)}")
+            raise ValueError(t("mutants.unknown_only", ids=sorted(unknown)))
     return picked
 
 
@@ -143,15 +145,15 @@ def run(cfg: Config, mutants: list[Mutant], *, timeout: float | None = None, log
             if m.cmd not in baseline_done:
                 rc, secs = _run(m.cmd, copy, timeout)
                 if rc != 0:
-                    raise RuntimeError(f"lệnh `{m.cmd}` ĐỎ trên bản sao CHƯA đột biến (rc={rc}) — sửa test trước")
+                    raise RuntimeError(t("mutants.baseline_red", cmd=m.cmd, rc=rc))
                 if secs > per:
-                    log(f"⚠ ngân sách: `{m.cmd}` mất {secs:.1f}s > {per:.0f}s/đột biến — thu hẹp lệnh (-k, test-double rẻ)")
+                    log(t("mutants.slow", cmd=m.cmd, secs=secs, per=per))
                 baseline_done.add(m.cmd)
             target = copy / m.file
             orig = target.read_text(encoding="utf-8")
             if orig.count(m.find) != 1:
                 results.append(Result(m, "ANCHOR", 0.0))
-                log(f"  ANCHOR    {m.id}  neo lệch trong {m.file}")
+                log(t("mutants.anchor_drift", id=m.id, file=m.file))
                 continue
             target.write_text(orig.replace(m.find, m.replace, 1), encoding="utf-8")
             try:

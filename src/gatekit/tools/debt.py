@@ -14,6 +14,7 @@ import re
 
 from gatekit.config import Config
 from gatekit.tools.ledger import lane_dir
+from gatekit.messages import t
 
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -32,16 +33,16 @@ def problems(cfg: Config, *, today: dt.date | None = None) -> list[str]:
                 continue
             cols = [c.strip() for c in m.group(2).split("|")]
             if len(cols) < 6:
-                out.append(f"{m.group(1)}: dòng thiếu cột (cần Nợ · Khuyết tật · Điều kiện đóng · Lát đóng · Hạn · TT)")
+                out.append(t("debt.columns", id=m.group(1)))
                 continue
             _, defect, close_cond, slice_id, due, status = cols[:6]
             if status.upper() != "OPEN":
                 continue
-            for label, v in (("khuyết tật còn ngỏ", defect), ("điều kiện đóng", close_cond), ("lát đóng", slice_id)):
+            for label, v in (("debt.what_defect", defect), ("debt.what_condition", close_cond), ("debt.what_slice", slice_id)):
                 if not v or v in {"-", "—", "?"}:
-                    out.append(f"{m.group(1)}: nợ MỞ thiếu {label}")
+                    out.append(t("debt.missing", id=m.group(1), what=t(label)))
             if not _DATE.match(due):
-                out.append(f"{m.group(1)}: hạn `{due}` không phải YYYY-MM-DD")
+                out.append(t("debt.bad_date", id=m.group(1), due=due))
             elif dt.date.fromisoformat(due) < today:
-                out.append(f"{m.group(1)}: QUÁ HẠN {due}")
+                out.append(t("debt.overdue", id=m.group(1), due=due))
     return out

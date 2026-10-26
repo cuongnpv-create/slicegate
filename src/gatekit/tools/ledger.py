@@ -17,6 +17,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from gatekit.config import Config
+from gatekit.messages import t
 
 KINDS = {"L": "LEDGER.md", "D": "DECISIONS.md", "C": "LEDGER.md", "N": "DEBT.md"}
 RES_FILE = ".gatekit/reservations.tsv"
@@ -27,7 +28,7 @@ def _lane(cfg: Config, name: str) -> dict:
     for ln in cfg.lanes():
         if ln["name"] == name:
             return ln
-    raise KeyError(f"làn lạ `{name}` — có: {[x['name'] for x in cfg.lanes()]}")
+    raise KeyError(t("ledger.unknown_lane", name=name, known=[x["name"] for x in cfg.lanes()]))
 
 
 def _def_patterns(prefix: str) -> dict[str, re.Pattern]:
@@ -70,9 +71,9 @@ def reservations(cfg: Config) -> list[dict]:
 
 def alloc(cfg: Config, lane_name: str, kind: str, count: int, owner: str, note: str = "") -> tuple[int, int]:
     if kind not in KINDS:
-        raise ValueError(f"loại lạ `{kind}` — có {sorted(KINDS)}")
+        raise ValueError(t("ledger.unknown_kind", kind=kind, known=sorted(KINDS)))
     if count < 1:
-        raise ValueError("count ≥ 1")
+        raise ValueError(t("ledger.count"))
     _lane(cfg, lane_name)  # làn lạ ⇒ KeyError
     top = max([0, *used(cfg, lane_name, kind),
                *[r["end"] for r in reservations(cfg) if r["lane"] == lane_name and r["kind"] == kind]])
@@ -96,7 +97,7 @@ def duplicates(cfg: Config) -> list[str]:
                 counts[n] += 1
             for n, c in sorted(counts.items()):
                 if c > 1:
-                    out.append(f"{lane['prefix']}-{kind}{n} định nghĩa {c} lần (làn {lane['name']})")
+                    out.append(t("ledger.duplicate", id=f"{lane['prefix']}-{kind}{n}", n=c, lane=lane["name"]))
     return out
 
 
@@ -135,7 +136,7 @@ def roll(cfg: Config, lane_name: str, *, today: dt.date | None = None, dry_run: 
     arch.mkdir(parents=True, exist_ok=True)
     for q, parts in moved.items():
         f = arch / f"LEDGER-{q}.md"
-        prev = f.read_text(encoding="utf-8") if f.exists() else f"# LEDGER lưu trữ {q} — làn {lane_name}\n\n"
+        prev = f.read_text(encoding="utf-8") if f.exists() else t("ledger.archive_title", quarter=q, lane=lane_name) + "\n\n"
         f.write_text(prev + "".join(b if b.endswith("\n") else b + "\n" for _, b in parts), encoding="utf-8")
     path.write_text("".join(keep_parts), encoding="utf-8")
     return ids

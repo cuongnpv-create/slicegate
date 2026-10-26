@@ -50,7 +50,7 @@ def test_risk_zone_other(repo):
     cfg = from_dict(repo, {})
     base = commit(repo, "init [S-0]", {"README.md": "x\n"})
     commit(repo, "docs [S-1]", {"docs/a.md": "a\n"})
-    assert classify(cfg, base).heaviest == "khác"
+    assert classify(cfg, base).heaviest == "other"
 
 
 def test_guard_hygiene(tmp_path):

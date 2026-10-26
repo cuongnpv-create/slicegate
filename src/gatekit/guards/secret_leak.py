@@ -14,17 +14,19 @@ import re
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture, iter_files, read
+from gatekit.messages import t
 
 NAME = "secret_leak"
 PACK = None
 FAST = False
-DEFECT = "khoá/mật khẩu/token lọt ra log, stdout, thông báo lỗi hoặc bị commit vào repo"
+DEFECT = {"vi": "khoá/mật khẩu/token lọt ra log, stdout, thông báo lỗi hoặc bị commit vào repo",
+          "en": "keys/passwords/tokens leak into logs, stdout, error messages or get committed"}
 
 _LITERALS = [
-    (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"), "khối private key PEM"),
-    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "khoá AWS"),
-    (re.compile(r"\bxox[abprs]-[0-9A-Za-z-]{10,}"), "token Slack"),
-    (re.compile(r"\bghp_[0-9A-Za-z]{36}\b"), "token GitHub"),
+    (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"), "secret.pem"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "secret.aws"),
+    (re.compile(r"\bxox[abprs]-[0-9A-Za-z-]{10,}"), "secret.slack"),
+    (re.compile(r"\bghp_[0-9A-Za-z]{36}\b"), "secret.github"),
 ]
 _SINKS = {"print", "repr", "format"}
 _LOG_ATTRS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log", "write"}
@@ -71,7 +73,7 @@ def _py_sinks(rel: str, text: str, rx: re.Pattern) -> list[tuple[int, str]]:
         for a in args:
             bad = [n for n in _names(a) if rx.search(n)]
             if bad:
-                hits.append((getattr(node, "lineno", 0), f"`{bad[0]}` đi vào {where}"))
+                hits.append((getattr(node, "lineno", 0), t("secret.sink", name=bad[0], where=where)))
     return hits
 
 
@@ -93,14 +95,14 @@ def check(cfg: Config) -> list[Finding]:
         for i, line in enumerate(text.splitlines(), 1):
             for pat, what in _LITERALS:
                 if pat.search(line):
-                    add(rel, i, f"{what} dán thẳng trong repo")
+                    add(rel, i, t("secret.literal", what=t(what)))
             for m in assign.finditer(line):
                 v = m.group("v")
                 if rx.search(m.group("n")) and not v.startswith(("${", "$", "<", "os.environ", "env:")) and not v.isupper():
-                    add(rel, i, f"gán hằng cho `{m.group('n')}` — đọc bí mật từ tệp/biến môi trường, ⛔ chữ cứng")
+                    add(rel, i, t("secret.assign", name=m.group("n")))
         if rel.endswith(".py"):
             for line_no, msg in _py_sinks(rel, text, rx):
-                add(rel, line_no, f"bí mật có đường ra: {msg}")
+                add(rel, line_no, msg)
     return found
 
 

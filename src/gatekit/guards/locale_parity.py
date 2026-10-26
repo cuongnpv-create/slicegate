@@ -11,11 +11,13 @@ import re
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture
+from gatekit.messages import t
 
 NAME = "locale_parity"
 PACK = "i18n"
 FAST = True
-DEFECT = "người dùng thấy khoá thô / chuỗi rỗng / sai tham số ở ngôn ngữ chưa dịch đủ"
+DEFECT = {"vi": "người dùng thấy khoá thô / chuỗi rỗng / sai tham số ở ngôn ngữ chưa dịch đủ",
+          "en": "users see raw keys / empty strings / wrong parameters in an incompletely translated language"}
 
 _PARAM = re.compile(r"\{(\w+)\}")
 
@@ -26,15 +28,15 @@ def check(cfg: Config) -> list[Finding]:
     langs = list(spec["langs"])
     found: list[Finding] = []
     if not base.is_dir():
-        return [Finding(NAME, spec["dir"], 0, "thiếu thư mục catalog")]
+        return [Finding(NAME, spec["dir"], 0, t("locale.no_dir"))]
     present = sorted(p.name for p in base.iterdir() if p.is_dir())
     for extra in sorted(set(present) - set(langs)):
-        found.append(Finding(NAME, f"{spec['dir']}/{extra}", 0, f"ngôn ngữ `{extra}` không khai trong packs.i18n.langs"))
+        found.append(Finding(NAME, f"{spec['dir']}/{extra}", 0, t("locale.extra_lang", lang=extra)))
     cat: dict[str, dict[str, dict[str, str]]] = {}
     for lang in langs:
         d = base / lang
         if not d.is_dir():
-            found.append(Finding(NAME, f"{spec['dir']}/{lang}", 0, "thiếu ngôn ngữ"))
+            found.append(Finding(NAME, f"{spec['dir']}/{lang}", 0, t("locale.missing_lang")))
             continue
         cat[lang] = {}
         for f in sorted(d.glob("*.json")):
@@ -42,17 +44,17 @@ def check(cfg: Config) -> list[Finding]:
             try:
                 obj = json.loads(f.read_text(encoding="utf-8"))
             except json.JSONDecodeError as e:
-                found.append(Finding(NAME, rel, e.lineno, f"JSON hỏng: {e.msg}"))
+                found.append(Finding(NAME, rel, e.lineno, t("locale.bad_json", msg=e.msg)))
                 continue
             if not isinstance(obj, dict) or any(not isinstance(v, str) for v in obj.values()):
-                found.append(Finding(NAME, rel, 0, "phải là object phẳng {khoá: chuỗi}"))
+                found.append(Finding(NAME, rel, 0, t("locale.not_flat")))
                 continue
             ns = f.stem
             for k, v in obj.items():
                 if not k.startswith(ns + "."):
-                    found.append(Finding(NAME, rel, 0, f"khoá `{k}` phải bắt đầu bằng `{ns}.`"))
+                    found.append(Finding(NAME, rel, 0, t("locale.prefix", key=k, ns=ns)))
                 if not v.strip():
-                    found.append(Finding(NAME, rel, 0, f"khoá `{k}` rỗng"))
+                    found.append(Finding(NAME, rel, 0, t("locale.empty", key=k)))
             cat[lang][ns] = obj
     if not cat:
         return found
@@ -64,17 +66,17 @@ def check(cfg: Config) -> list[Finding]:
         for ns in sorted(set(ref) | set(nss)):
             rel = f"{spec['dir']}/{lang}/{ns}.json"
             if ns not in nss:
-                found.append(Finding(NAME, rel, 0, f"thiếu tệp (có ở `{ref_lang}`)"))
+                found.append(Finding(NAME, rel, 0, t("locale.missing_file", ref=ref_lang)))
                 continue
             if ns not in ref:
-                found.append(Finding(NAME, rel, 0, f"tệp thừa (không có ở `{ref_lang}`)"))
+                found.append(Finding(NAME, rel, 0, t("locale.extra_file", ref=ref_lang)))
                 continue
             for k in sorted(set(ref[ns]) ^ set(nss[ns])):
-                side = "thiếu" if k in ref[ns] else "thừa"
-                found.append(Finding(NAME, rel, 0, f"{side} khoá `{k}` so với `{ref_lang}`"))
+                key = "locale.missing_key" if k in ref[ns] else "locale.extra_key"
+                found.append(Finding(NAME, rel, 0, t(key, key=k, ref=ref_lang)))
             for k in sorted(set(ref[ns]) & set(nss[ns])):
                 if set(_PARAM.findall(ref[ns][k])) != set(_PARAM.findall(nss[ns][k])):
-                    found.append(Finding(NAME, rel, 0, f"khoá `{k}`: tham số {{…}} lệch `{ref_lang}`"))
+                    found.append(Finding(NAME, rel, 0, t("locale.params", key=k, ref=ref_lang)))
     return found
 
 

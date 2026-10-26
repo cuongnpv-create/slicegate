@@ -9,11 +9,13 @@ from __future__ import annotations
 
 from gatekit.config import Config
 from gatekit.guards._common import Finding, expect, fixture, iter_files, read
+from gatekit.messages import t
 
 NAME = "provider_name_scope"
 PACK = "multi_provider"
 FAST = True
-DEFECT = "logic riêng của một nhà cung cấp rò ra tầng chung ⇒ thêm nhà cung cấp thứ 2 phải sửa khắp nơi, nhánh if-provider bị quên"
+DEFECT = {"vi": "logic riêng của một nhà cung cấp rò ra tầng chung ⇒ thêm nhà cung cấp thứ 2 phải sửa khắp nơi, nhánh if-provider bị quên",
+          "en": "provider-specific logic leaks into the shared layer ⇒ adding a 2nd provider means edits everywhere, forgotten if-provider branches"}
 
 
 def check(cfg: Config) -> list[Finding]:
@@ -32,10 +34,10 @@ def check(cfg: Config) -> list[Finding]:
             if rel.startswith(home):
                 continue
             for tok in tokens:
-                t = tok.lower()
+                needle = tok.lower()
                 for i, line in enumerate(low_lines, 1):
-                    if t in line:
-                        found.append(Finding(NAME, rel, i, f"chuỗi `{tok}` của `{name}` ngoài `{home}`"))
+                    if needle in line:
+                        found.append(Finding(NAME, rel, i, t("provider.outside", token=tok, provider=name, home=home)))
                         break
     return found
 

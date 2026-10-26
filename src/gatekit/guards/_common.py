@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Iterator
 
 from gatekit.config import Config, from_dict
+from gatekit.messages import t
 
 
 @dataclass(frozen=True)
@@ -87,6 +88,6 @@ def fixture(files: dict[str, str], over: dict | None = None, *, git_init: bool =
 def expect(errors: list[str], label: str, findings: list[Finding], *, red: bool) -> None:
     """Ghi lỗi selftest nếu kết quả ngược kỳ vọng."""
     if red and not findings:
-        errors.append(f"{label}: kỳ vọng ĐỎ nhưng XANH")
+        errors.append(t("selftest.want_red", label=label))
     if not red and findings:
-        errors.append(f"{label}: kỳ vọng XANH nhưng ĐỎ: {findings[0]}")
+        errors.append(t("selftest.want_green", label=label, first=findings[0]))
