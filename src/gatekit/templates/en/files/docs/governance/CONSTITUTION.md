@@ -65,3 +65,10 @@ A query without a tenant filter is a defect, even when ids are hard to guess. En
 Every read of health data has a reader, a reason and a log row; that data never leaves the protected zone (logs,
 analytics, notifications). Every clinical number carries a unit and a source. Enforced by: `phi_log`, `phi_tag`.
 {{/pack}}
+{{#pack logistics}}
+
+## Article 15 — Quantities and times are unambiguous
+A physical quantity is never a bare number: its unit is in its name and conversions live in one module. A timestamp is
+never naive: it is stored in UTC with its zone and becomes local time only on display. A carrier call that can be
+retried never books twice. Enforced by: `unit_suffix`, `naive_time`.
+{{/pack}}

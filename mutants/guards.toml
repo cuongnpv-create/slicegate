@@ -113,3 +113,31 @@ file = "src/gatekit/guards/phi_tag.py"
 find = "            if is_phi(spec, m.group(\"col\")) and not _TAG.search(line):"
 replace = "            if False:"
 why = "cột dữ liệu sức khoẻ mới vào DB không qua rà soát"
+
+[[mutant]]
+id = "unit-01"
+file = "src/gatekit/guards/unit_suffix.py"
+find = "    return bool(ws & quantity) and not (ws & not_quantity) and not (ws & units)"
+replace = "    return False"
+why = "guard không còn nhận ra đại lượng thiếu đơn vị ⇒ weight = 12 (kg hay lb?) lọt qua"
+
+[[mutant]]
+id = "unit-02"
+file = "src/gatekit/guards/unit_suffix.py"
+find = "    return isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == \"len\""
+replace = "    return False"
+why = "height = len(rows) bị báo nhầm là kích thước ⇒ người dùng tắt guard"
+
+[[mutant]]
+id = "time-01"
+file = "src/gatekit/guards/naive_time.py"
+find = "            if \"tz\" not in kws and (pos is None or len(node.args) <= pos):"
+replace = "            if False:"
+why = "datetime.now() không múi giờ lọt qua ⇒ giờ cắt so theo giờ máy chủ"
+
+[[mutant]]
+id = "time-02"
+file = "src/gatekit/guards/naive_time.py"
+find = "(?!\\s*(?:\\(\\d\\)\\s*)?with\\s+time\\s+zone)"
+replace = ""
+why = "cột timestamptz bị báo nhầm là ngây thơ ⇒ người dùng tắt guard"

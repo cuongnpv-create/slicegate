@@ -65,3 +65,10 @@ không lọc tenant là lỗi, kể cả khi id khó đoán. Máy chặn: `tenan
 Mỗi lần đọc dữ liệu sức khoẻ có người đọc, lý do và một dòng nhật ký; dữ liệu ấy ⛔ rời vùng được bảo vệ (log, analytics,
 thông báo). Mọi con số lâm sàng mang đơn vị và có nguồn. Máy chặn: `phi_log`, `phi_tag`.
 {{/pack}}
+{{#pack logistics}}
+
+## Điều 15 — Đại lượng và thời gian không mơ hồ
+Đại lượng vật lý ⛔ là con số trần: đơn vị nằm trong tên, việc đổi đơn vị sống ở một module. Mốc thời gian ⛔ ngây thơ:
+lưu UTC kèm múi giờ, chỉ đổi sang giờ địa phương khi hiển thị. Lời gọi hãng vận chuyển có thể gọi lại ⛔ đặt chỗ hai lần.
+Máy chặn: `unit_suffix`, `naive_time`.
+{{/pack}}
