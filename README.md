@@ -113,11 +113,17 @@ gatekit report      tổng hợp (hook SessionStart dùng bản --brief)
 ## gatekit tự gác chính nó
 
 Repo này chạy chính gatekit (`gatekit.toml` mức lite, `tests/manifest.tsv`, `mutants/`):
-`gatekit check --full` XANH · 217 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
+`gatekit check --full` XANH · 219 test pytest · **11/11 đột biến bị giết** trên các guard và luật quyết định
 (vùng rủi ro, tỷ lệ lát, cấp số sổ, cuộn sổ, bộ chạy đột biến).
 
 Khi dựng bộ đột biến này, lượt chạy đầu báo 11/11 "sống" — lệnh test trong bản sao import gói đã cài `pip -e` trỏ về
 checkout gốc, nên đột biến không có tác dụng. Lỗi ấy giờ được `gatekit mutants run` cảnh báo khi mọi đột biến đều sống.
+
+## Ca thử nghiệm
+
+[`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) — cài lên `pallets/itsdangerous`: 6 đột biến vùng
+K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi vòng thử khoá bị gỡ một nửa); 3 chỗ vướng
+của gatekit tìm được và sửa ngay (lượt `check` đầu từ 12 ĐỎ oan xuống 0).
 
 ## Cấu trúc
 

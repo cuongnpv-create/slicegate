@@ -5,6 +5,9 @@
      ngoại lệ — đường ra log, stdout, thông báo lỗi.
   2. (mọi tệp văn bản) hằng bí mật dán thẳng: khối PEM private key, khoá AWS `AKIA…`, `xox?-` Slack,
      `ghp_` GitHub, hoặc gán `<tên bí mật> = "<chuỗi ≥ 8 ký tự>"`.
+     Luật gán hằng BỎ QUA tệp test (`tests.test_globs` ∨ thư mục tests/fixtures) — khoá giả trong test là bình thường
+     (đo trên itsdangerous: 7/7 báo nhầm là `secret_key="secret-key"` trong test) — và giá trị giữ chỗ
+     (example · dummy · fake · changeme · placeholder · your-… · xxx). Khối PEM / khoá AWS / token thật vẫn ĐỎ ở mọi nơi.
 Miễn trừ: `secrets.allowlist` — mỗi dòng `tệp:dòng` hoặc `tệp:*`, kèm lý do sau dấu `#`.
 """
 from __future__ import annotations
@@ -28,6 +31,8 @@ _LITERALS = [
     (re.compile(r"\bxox[abprs]-[0-9A-Za-z-]{10,}"), "secret.slack"),
     (re.compile(r"\bghp_[0-9A-Za-z]{36}\b"), "secret.github"),
 ]
+_PLACEHOLDER = re.compile(r"(?i)(example|dummy|fake|changeme|change[-_]me|placeholder|your[-_]|xxx|\*\*\*)")
+_TEST_DIR = re.compile(r"(^|/)(tests?|fixtures?|__tests__|testdata)/")
 _SINKS = {"print", "repr", "format"}
 _LOG_ATTRS = {"debug", "info", "warning", "warn", "error", "exception", "critical", "log", "write"}
 _TEXT_EXT = (".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".java", ".kt", ".rs", ".cs", ".rb", ".php",
@@ -92,13 +97,15 @@ def check(cfg: Config) -> list[Finding]:
         if rel == cfg["secrets"]["allowlist"]:
             continue
         text = read(cfg, rel)
+        is_test = bool(_TEST_DIR.search(rel)) or any(re.search(g, rel) for g in cfg["tests"]["test_globs"])
         for i, line in enumerate(text.splitlines(), 1):
             for pat, what in _LITERALS:
                 if pat.search(line):
                     add(rel, i, t("secret.literal", what=t(what)))
-            for m in assign.finditer(line):
+            for m in ([] if is_test else assign.finditer(line)):
                 v = m.group("v")
-                if rx.search(m.group("n")) and not v.startswith(("${", "$", "<", "os.environ", "env:")) and not v.isupper():
+                if rx.search(m.group("n")) and not v.startswith(("${", "$", "<", "os.environ", "env:")) and not v.isupper() \
+                        and not _PLACEHOLDER.search(v):
                     add(rel, i, t("secret.assign", name=m.group("n")))
         if rel.endswith(".py"):
             for line_no, msg in _py_sinks(rel, text, rx):
@@ -120,6 +127,12 @@ def selftest() -> list[str]:
         expect(errs, "gán hằng mật khẩu", check(cfg), red=True)
     with fixture({"conf/app.yaml": "db_password: \"${DB_PASSWORD}\"\n"}) as cfg:
         expect(errs, "tham chiếu biến môi trường", check(cfg), red=False)
+    with fixture({"tests/test_sign.py": "s = Signer(secret_key=\"secret-key\")\napi_key = \"abcdefgh123\"\n"}) as cfg:
+        expect(errs, "khoá giả trong test", check(cfg), red=False)
+    with fixture({"src/settings.py": "api_key = \"changeme-please\"\n"}) as cfg:
+        expect(errs, "giá trị giữ chỗ", check(cfg), red=False)
+    with fixture({"tests/data.py": "K = \"-----BEGIN PRIVATE KEY-----\"\n"}) as cfg:
+        expect(errs, "PEM trong test vẫn ĐỎ", check(cfg), red=True)
     with fixture({"k.pem.txt": "", "src/k.py": "K = '''-----BEGIN PRIVATE KEY-----'''\n"}) as cfg:
         expect(errs, "PEM", check(cfg), red=True)
     with fixture({"src/a.py": "def f(api_key):\n    print(api_key)\n",

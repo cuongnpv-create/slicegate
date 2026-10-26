@@ -60,3 +60,17 @@ def test_guard_hygiene(tmp_path):
     guard_hygiene.record(cfg, "guard-catch", "secret_leak", "S-5", "print(token)")
     out = guard_hygiene.report(cfg, ["secret_leak", "naming_scope"])
     assert "ĐỦ ĐIỀU KIỆN" in out and "1  secret_leak" in out and "0  naming_scope" in out
+
+
+def test_slice_quota_ignores_history_before_install(repo):
+    """Dự án có lịch sử: commit tài liệu liền nhau TRƯỚC khi cài ⛔ thành vi phạm (đo trên itsdangerous)."""
+    commit(repo, "docs: a", {"docs/a.md": "a\n"})
+    commit(repo, "docs: b", {"docs/b.md": "b\n"})
+    commit(repo, "docs: c", {"docs/c.md": "c\n"})
+    commit(repo, "chore: cài gatekit [G-1]", {"gatekit.toml": "", "docs/x.md": "x\n"})
+    commit(repo, "feat [S-1]", {"src/a.py": "a=1\n"})
+    cfg = from_dict(repo, {})
+    seq = slices(cfg)
+    assert [s.id for s in seq] == ["G-1", "S-1"]
+    assert violations(cfg, seq) == []
+    assert len(slices(cfg, since=None, ref="HEAD")) == 2
