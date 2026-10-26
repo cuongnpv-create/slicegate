@@ -80,7 +80,7 @@ is for Claude Code.
 ### Option 2 — pip
 
 ```bash
-pip install git+https://github.com/cuongnpv-create/slicegate      # or: pip install -e . in a clone
+pip install slicegate                                               # or: pipx install slicegate · uvx slicegate
 cd your-project && git init                                         # if it is not a repo yet
 slicegate init --name "MyApp" --language en --level standard --pack i18n --pack postgres
 slicegate hooks install

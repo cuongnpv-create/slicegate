@@ -52,7 +52,7 @@ Lưu ý: claude.ai và Cowork không cài plugin có thư mục `bin/` — plugi
 ### Cách 2 — gói pip
 
 ```bash
-pip install git+https://github.com/cuongnpv-create/slicegate        # hoặc: pip install -e . trong bản sao repo
+pip install slicegate                                               # hoặc: pipx install slicegate · uvx slicegate
 cd du-an-cua-ban && git init        # nếu chưa là repo
 slicegate init --name "MyApp" --level standard --pack i18n --pack postgres
 slicegate hooks install
