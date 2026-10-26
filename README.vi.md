@@ -142,7 +142,7 @@ checkout gốc, nên đột biến không có tác dụng. Lỗi ấy giờ đư
 ## Ca thử nghiệm
 
 [`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) — cài lên `pallets/itsdangerous`: 6 đột biến vùng
-K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi vòng thử khoá bị gỡ một nửa); 3 chỗ vướng
+K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi bộ ký chỉ thử khoá cũ nhất); 3 chỗ vướng
 của slicegate tìm được và sửa ngay (lượt `check` đầu từ 12 ĐỎ oan xuống 0).
 
 ## Cấu trúc
