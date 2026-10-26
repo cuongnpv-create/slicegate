@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gatekit"
+version = "0.1.0"
+description = "Quy trình phát triển phần mềm có cổng duyệt (gate) cho đội agent AI — lát, sổ phán, máy gác, đột biến theo vùng rủi ro."
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+gatekit = "gatekit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gatekit = ["templates/**/*", "packs/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,19 @@
+# gatekit tự gác chính nó (dogfood).
+[project]
+name = "gatekit"
+level = "lite"
+language = "vi"
+packs = []
+
+[paths]
+prod = ['^src/gatekit/']
+
+[zones.K]
+label = "máy gác bí mật"
+paths = ['^src/gatekit/guards/secret_leak\.py$']
+grep = []
+
+[zones.F]
+label = "luật quyết định của quy trình: vùng rủi ro, tỷ lệ lát, cấp số sổ"
+paths = ['^src/gatekit/tools/(risk_zone|slice_quota|ledger)\.py$', '^src/gatekit/qa/mutants\.py$']
+grep = []

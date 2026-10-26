@@ -1,0 +1,3 @@
+# manifest test — mỗi dòng: đường dẫn|glob <TAB> làn <TAB> tầng(0-4) <TAB> ghi chú
+# tầng: 0 guard · 1 thuần · 2 DB/dịch vụ · 3 phát lại/E2E · 4 hợp đồng giữa làn
+# test tồn tại mà không khớp dòng nào ⇒ guard test_wiring ĐỎ

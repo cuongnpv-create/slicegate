@@ -1,0 +1,3 @@
+# manifest test — đường dẫn|glob <TAB> làn <TAB> tầng(0-4) <TAB> ghi chú
+tests/test_*.py	core	1	pytest
+mutants/*.toml	core	1	gatekit mutants run

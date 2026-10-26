@@ -1,0 +1,45 @@
+# Bộ đột biến cho chính các guard của gatekit: gỡ một luật ⇒ selftest/pytest phải ĐỎ.
+zone = "K"
+cmd = "PYTHONPATH=src python3 -m pytest -q -x tests/test_guards.py"
+
+[[mutant]]
+id = "secret-01"
+file = "src/gatekit/guards/secret_leak.py"
+find = "            if bad:\n"
+replace = "            if False:\n"
+why = "bỏ phát hiện bí mật đi vào print/log ⇒ token lọt log mà guard vẫn XANH"
+
+[[mutant]]
+id = "secret-02"
+file = "src/gatekit/guards/secret_leak.py"
+find = "        if f\"{rel}:{line}\" in allow or f\"{rel}:*\" in allow:"
+replace = "        if True:"
+why = "allowlist nuốt mọi phát hiện"
+
+[[mutant]]
+id = "naming-01"
+file = "src/gatekit/guards/naming_scope.py"
+find = "    return any(ord(c) > 127 for c in name)"
+replace = "    return False"
+why = "tên tiếng Việt có dấu lọt vào mã"
+
+[[mutant]]
+id = "naming-02"
+file = "src/gatekit/guards/naming_scope.py"
+find = "    for key in sorted(base - seen):"
+replace = "    for key in []:"
+why = "baseline không còn co lại ⇒ thành chỗ giấu tên mới"
+
+[[mutant]]
+id = "wiring-01"
+file = "src/gatekit/guards/test_wiring.py"
+find = "        if not matched(f):"
+replace = "        if False:"
+why = "test mới không nằm trong manifest mà guard không báo"
+
+[[mutant]]
+id = "migr-01"
+file = "src/gatekit/guards/migration_scope.py"
+find = "        elif lock[name] != sha:"
+replace = "        elif False:"
+why = "sửa migration đã áp mà không bị bắt"
