@@ -1,22 +1,47 @@
 name: release
 # Tag `vX.Y.Z` ⇒ build + test ⇒ PyPI (trusted publishing, no token in the repo) ⇒ GitHub Release.
+# Chạy tay (Actions → release → Run workflow, trên main): nhập phiên bản ⇒ cùng các bước, tag do bước cuối tạo.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Phiên bản phát hành, khớp pyproject.toml (vd 0.3.1) / version to release, must match pyproject.toml"
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve the tag
+        id: tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            test "$GITHUB_REF" = "refs/heads/main" || { echo "manual release runs on main only (got $GITHUB_REF)"; exit 1; }
+            tag="v${INPUT_VERSION#v}"
+            if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+              echo "tag $tag already exists — bump the version"; exit 1
+            fi
+          else
+            tag="$GITHUB_REF_NAME"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - name: Tag must match the package version
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           plugin=$(python -c "import json; print(json.load(open('.claude-plugin/plugin.json'))['version'])")
-          test "v$version" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME ≠ pyproject v$version"; exit 1; }
+          test "v$version" = "$TAG" || { echo "tag $TAG ≠ pyproject v$version"; exit 1; }
           market=$(python -c "import json; print(json.load(open('.claude-plugin/marketplace.json'))['plugins'][0]['version'])")
           test "$plugin" = "$version" || { echo "plugin.json $plugin ≠ pyproject $version"; exit 1; }
           test "$market" = "$version" || { echo "marketplace.json $market ≠ pyproject $version"; exit 1; }
@@ -43,7 +68,7 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
-    needs: pypi
+    needs: [build, pypi]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -52,12 +77,15 @@ jobs:
         with:
           name: dist
           path: dist/
-      # Release tạo sẵn trên giao diện GitHub (tag tạo từ "Draft a new release") ⇒ chỉ đính gói vào
+      # Release tạo sẵn trên giao diện GitHub (tag tạo từ "Draft a new release") ⇒ chỉ đính gói vào.
+      # Chạy tay: chưa có tag ⇒ `gh release create --target <commit>` tạo tag luôn (tag do GITHUB_TOKEN tạo không kích
+      # hoạt lại workflow này ⇒ không phát hành hai lần).
       - run: |
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}

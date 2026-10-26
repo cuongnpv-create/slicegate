@@ -142,7 +142,7 @@ checkout gốc, nên đột biến không có tác dụng. Lỗi ấy giờ đư
 ## Ca thử nghiệm
 
 [`docs/case-studies/itsdangerous.md`](docs/case-studies/itsdangerous.md) — cài lên `pallets/itsdangerous`: 6 đột biến vùng
-K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi vòng thử khoá bị gỡ một nửa); 3 chỗ vướng
+K chỉ ra một lỗ hổng test thật ở cơ chế xoay khoá (297 test vẫn xanh khi bộ ký chỉ thử khoá cũ nhất); 3 chỗ vướng
 của slicegate tìm được và sửa ngay (lượt `check` đầu từ 12 ĐỎ oan xuống 0).
 
 ## Cấu trúc
@@ -164,6 +164,13 @@ src/slicegate/
 tests/                 pytest
 mutants/               bộ đột biến của chính slicegate
 ```
+
+## Phát hành
+
+Tăng phiên bản ở `pyproject.toml`, `.claude-plugin/plugin.json` và `.claude-plugin/marketplace.json` (workflow chặn nếu
+lệch), gộp vào `main`, rồi chọn một trong hai: tạo GitHub Release với tag `vX.Y.Z`, hoặc chạy **Actions → release → Run
+workflow** trên `main` và nhập phiên bản. Cả hai đường đều test, đóng gói, đẩy lên PyPI qua trusted publishing và đính gói
+vào GitHub Release.
 
 ## Lộ trình
 

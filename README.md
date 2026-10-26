@@ -168,8 +168,8 @@ now warns when every mutant survives.
 ## Case study
 
 [`docs/case-studies/itsdangerous.md`](https://github.com/cuongnpv-create/slicegate/blob/main/docs/case-studies/itsdangerous.md) (in Vietnamese) — slicegate set up on
-`pallets/itsdangerous`: 6 zone-K mutants exposed a real test gap in key rotation (all 297 tests stayed green with half of
-the key-trial loop removed); 3 slicegate rough edges found and fixed on the spot (first `check` went from 12 false REDs to 0).
+`pallets/itsdangerous`: 6 zone-K mutants exposed a real test gap in key rotation (all 297 tests stayed green when the signer tried only the
+oldest key); 3 slicegate rough edges found and fixed on the spot (first `check` went from 12 false REDs to 0).
 
 ## Layout
 
@@ -190,6 +190,13 @@ src/slicegate/
 tests/                 pytest
 mutants/               slicegate's own mutant suites
 ```
+
+## Releasing
+
+Bump the version in `pyproject.toml`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (the workflow
+refuses a mismatch), merge to `main`, then either publish a GitHub Release with tag `vX.Y.Z`, or run
+**Actions → release → Run workflow** on `main` with the version. Both paths test, build, publish to PyPI through trusted
+publishing and attach the packages to the GitHub Release.
 
 ## Roadmap
 
