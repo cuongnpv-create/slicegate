@@ -4,7 +4,7 @@ Lát = các commit first-parent LIỀN NHAU mang cùng mã lát (`slices.id_rege
 mã sản xuất (`paths.prod`). Luật (tham số `session.*`):
   · chuỗi lát quản trị liền nhau ≤ `governance_slice_max`;
   · sau một chuỗi lát quản trị, cần ≥ `code_slices_after_governance` lát MÃ trước lát quản trị kế.
-Miễn: tiêu đề mang `[QUOTA-EXEMPT: <lý do>]` (lý do bắt buộc, phải có lời owner/gate dẫn chứng).
+Phạm vi mặc định: từ commit thêm `gatekit.toml` (lịch sử trước khi cài bỏ qua). Miễn: tiêu đề mang `[QUOTA-EXEMPT: <lý do>]` (lý do bắt buộc, phải có lời owner/gate dẫn chứng).
 """
 from __future__ import annotations
 
@@ -34,6 +34,13 @@ class Slice:
 def slices(cfg: Config, since: str | None = None, ref: str = "HEAD") -> list[Slice]:
     if not git(cfg.root, "rev-parse", "--verify", "-q", ref, check=False).strip():
         return []  # repo chưa có commit
+    if since is None:
+        # mặc định: từ commit THÊM gatekit.toml (lịch sử trước khi cài không theo luật lát — tính vào là ĐỎ oan)
+        added = git(cfg.root, "log", "--diff-filter=A", "--format=%H", ref, "--", "gatekit.toml", check=False).split()
+        if added:
+            first = added[-1]
+            has_parent = git(cfg.root, "rev-parse", "--verify", "-q", f"{first}^", check=False).strip()
+            since = f"{first}^" if has_parent else None
     rng = f"{since}..{ref}" if since else ref
     log = git(cfg.root, "log", "--first-parent", "--reverse", "--format=%H%x09%s", rng).splitlines()
     rx = re.compile(cfg["slices"]["id_regex"])

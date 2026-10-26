@@ -268,6 +268,30 @@ def values_for(cfg: Config) -> dict[str, str]:
     }
 
 
+SEED_PATTERNS = ("test_*.py", "*_test.py", "*_test.go", "*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx",
+                 "*.test.js", "*.spec.js", "*.test.jsx")
+
+
+def seed_manifest(cfg: Config) -> str:
+    """Dòng manifest cho test ĐANG CÓ trong repo (mỗi thư mục × mẫu tên một glob) — để lượt `check` đầu không ĐỎ
+    `test_wiring` vì những test chạy được từ trước. Test thêm về sau vẫn phải khai tay (đó là việc của guard)."""
+    import fnmatch
+    from gatekit.guards._common import iter_files
+    globs = [re.compile(g) for g in cfg["tests"]["test_globs"]]
+    lane = cfg.lanes()[0]["name"]
+    lines: list[str] = []
+    for rel in iter_files(cfg):
+        if not any(g.search(rel) for g in globs):
+            continue
+        d, _, name = rel.rpartition("/")
+        pat = next((x for x in SEED_PATTERNS if fnmatch.fnmatchcase(name, x)), name)
+        entry = f"{d}/{pat}" if d else pat
+        line = f"{entry}\t{lane}\t1\tgatekit init\n"
+        if line not in lines:
+            lines.append(line)
+    return "".join(lines)
+
+
 def plan(cfg: Config) -> dict[str, str]:
     """Đường dẫn đích → nội dung đã render."""
     out: dict[str, str] = {}
@@ -280,6 +304,8 @@ def plan(cfg: Config) -> dict[str, str]:
         if cfg.level == "lite" and rel in LITE_SKIP:
             continue
         out[rel] = render(p.read_text(encoding="utf-8"), cfg)
+        if rel == "tests/manifest.tsv":
+            out[rel] += seed_manifest(cfg)
     for a in agent_names(cfg):
         src = _tpl(lang) / "agents" / f"{a}.md"
         if not src.exists():

@@ -79,3 +79,15 @@ def test_docs_language_selection(repo, language, docs, expect):
 def test_cli_docs_language(repo):
     assert main(["--root", str(repo), "init", "--name", "X", "--language", "en", "--level", "lite"]) == 0
     assert "Hard architectural constraints" in (repo / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def test_init_seeds_manifest_from_existing_tests(repo):
+    """Lượt `check` đầu trên dự án có sẵn test ⇒ ⛔ ĐỎ test_wiring (đo trên itsdangerous: 5 tệp test đỏ oan)."""
+    for rel in ("tests/unit/test_a.py", "tests/unit/test_b.py", "tests/test_top.py", "web/src/app.test.ts"):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text("", encoding="utf-8")
+    init(repo, name="Demo", level="standard", packs=[], lanes=[("be", "PB")])
+    man = (repo / "tests/manifest.tsv").read_text(encoding="utf-8")
+    assert "tests/unit/test_*.py\tbe\t1" in man and man.count("tests/unit/") == 1
+    assert "tests/test_*.py\tbe\t1" in man and "web/src/*.test.ts\tbe\t1" in man
+    assert main(["--root", str(repo), "check"]) == 0
