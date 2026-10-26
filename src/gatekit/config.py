@@ -19,6 +19,7 @@ DEFAULTS: dict[str, Any] = {
         "name": "Project",
         "level": "standard",
         "language": "vi",
+        "docs_language": "",   # rỗng = theo language nếu có mẫu, ngược lại "en"
         "packs": [],
     },
     "paths": {
@@ -136,6 +137,9 @@ def validate(data: dict) -> None:
     lvl = data["project"]["level"]
     if lvl not in LEVELS:
         raise ConfigError(f"project.level = {lvl!r} — chỉ nhận {LEVELS}")
+    dl = data["project"].get("docs_language", "")
+    if dl not in ("", "vi", "en"):
+        raise ConfigError(f"project.docs_language = {dl!r} — chỉ nhận '', 'vi', 'en'")
     prefixes = [ln["prefix"] for ln in data["ledger"]["lanes"]]
     if len(set(prefixes)) != len(prefixes):
         raise ConfigError(f"ledger.lanes trùng prefix: {prefixes}")

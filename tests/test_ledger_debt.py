@@ -76,3 +76,10 @@ def test_debt_rules(tmp_path):
     assert "P-N2: nợ MỞ thiếu khuyết tật" in joined
     assert "P-N3: QUÁ HẠN" in joined
     assert "P-N5" in joined
+
+
+def test_roll_english_status(tmp_path):
+    cfg = from_dict(tmp_path, LANES)
+    body = "## P-L1 — G-OUT S-1 · 2025-01-10\nStatus: CLOSED\n\n## P-L2 — G-OUT S-2 · 2025-01-11\nStatus: OPEN\n"
+    write(tmp_path, "docs/ledger/LEDGER.md", body)
+    assert ledger.roll(cfg, "core", today=dt.date(2026, 10, 26)) == ["P-L1"]

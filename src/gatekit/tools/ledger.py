@@ -104,7 +104,7 @@ _ENTRY = re.compile(r"^## (?P<id>\S+-L\d+)\b.*?·\s*(?P<date>\d{4}-\d{2}-\d{2})\
 
 
 def roll(cfg: Config, lane_name: str, *, today: dt.date | None = None, dry_run: bool = False) -> list[str]:
-    """Chuyển entry ĐÃ ĐÓNG (`Trạng thái: CLOSED`) cũ hơn `roll_keep_days` sang `archive/LEDGER-<YYYY>Q<q>.md`.
+    """Chuyển entry ĐÃ ĐÓNG (`Trạng thái: CLOSED` ∨ `Status: CLOSED`) cũ hơn `roll_keep_days` sang `archive/LEDGER-<YYYY>Q<q>.md`.
 
     Entry còn điều kiện mở (`Trạng thái: OPEN`) ở lại sổ sống — gate chỉ phải đọc sổ sống + DECISIONS.
     """
@@ -123,7 +123,7 @@ def roll(cfg: Config, lane_name: str, *, today: dt.date | None = None, dry_run: 
     for i, m in enumerate(heads):
         body = text[m.start(): heads[i + 1].start() if i + 1 < len(heads) else len(text)]
         d = dt.date.fromisoformat(m.group("date"))
-        closed = re.search(r"^Trạng thái:\s*CLOSED\b", body, re.M) is not None
+        closed = re.search(r"^(Trạng thái|Status):\s*CLOSED\b", body, re.M) is not None
         if closed and today - d > keep:
             moved[f"{d.year}Q{(d.month - 1) // 3 + 1}"].append((m.group("id"), body))
         else:

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# pre-commit — gatekit. FAST: only FAST guards. fail-CLOSED: gatekit missing / guard RED / error ⇒ commit blocked.
+# Client-side only (`--no-verify` bypasses it) — pre-push and CI guard again; project rules forbid --no-verify.
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+if command -v gatekit >/dev/null 2>&1; then GK=(gatekit); else GK=(python3 -m gatekit); fi
+"${GK[@]}" check --fast || { echo "pre-commit: 🔴 gatekit check --fast RED"; exit 1; }

@@ -1,6 +1,7 @@
 """Dòng lệnh gatekit.
 
-  gatekit init [--name N] [--level lite|standard|regulated] [--pack P …] [--lane name:PREFIX …] [--force]
+  gatekit init [--name N] [--level lite|standard|regulated] [--pack P …] [--lane name:PREFIX …]
+               [--language L] [--docs-language vi|en] [--force]
   gatekit check [--fast|--full]          guard đang bật (+ neo đột biến, số sổ trùng khi --full)
   gatekit selftest                        ca âm/dương của mọi guard đang bật
   gatekit zone --base <rev> [--rev R]     vùng rủi ro của diff + hình thức kiểm bắt buộc
@@ -43,7 +44,8 @@ def cmd_init(args: argparse.Namespace) -> int:
         lanes.append((name, prefix))
     root = Path(args.root)
     written, skipped = init(root, name=args.name or root.resolve().name, level=args.level,
-                            packs=args.pack or [], language=args.language, lanes=lanes, force=args.force)
+                            packs=args.pack or [], language=args.language, lanes=lanes, force=args.force,
+                            docs_language=args.docs_language)
     for w in written:
         _p(f"  + {w}")
     for s in skipped:
@@ -312,7 +314,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--pack", action="append", choices=["i18n", "multi_provider", "legacy_upgrade", "postgres",
                                                        "fintech", "data_pipeline"])
     p.add_argument("--lane", action="append", help="name:PREFIX, lặp lại cho nhiều làn (làn đầu = sổ chung)")
-    p.add_argument("--language", default="vi")
+    p.add_argument("--language", default="vi", help="ngôn ngữ agent giao tiếp")
+    p.add_argument("--docs-language", default="", choices=["", "vi", "en"],
+                   help="ngôn ngữ bộ mẫu tài liệu (mặc định: theo --language nếu có mẫu, ngược lại en)")
     p.add_argument("--force", action="store_true")
     p.set_defaults(fn=cmd_init)
 

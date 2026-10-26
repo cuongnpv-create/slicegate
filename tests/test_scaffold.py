@@ -11,10 +11,12 @@ from gatekit.scaffold import init
 ALL_PACKS = ["i18n", "multi_provider", "legacy_upgrade", "postgres", "fintech", "data_pipeline"]
 
 
+@pytest.mark.parametrize("lang", ["vi", "en"])
 @pytest.mark.parametrize("level", ["lite", "standard", "regulated"])
 @pytest.mark.parametrize("packs", [[], ALL_PACKS], ids=["no-pack", "all-packs"])
-def test_init_renders_clean(repo, level, packs):
-    written, skipped = init(repo, name="Demo", level=level, packs=packs, lanes=[("core", "P"), ("be", "PB")])
+def test_init_renders_clean(repo, level, packs, lang):
+    written, skipped = init(repo, name="Demo", level=level, packs=packs, lanes=[("core", "P"), ("be", "PB")],
+                            language=lang)
     assert not skipped
     for rel in written:
         text = (repo / rel).read_text(encoding="utf-8")
@@ -32,8 +34,9 @@ def test_init_renders_clean(repo, level, packs):
         assert "PB-L<n>" in (repo / "docs/ledger/be/LEDGER.md").read_text(encoding="utf-8")
 
 
-def test_fresh_init_is_green(repo):
-    init(repo, name="Demo", level="regulated", packs=ALL_PACKS)
+@pytest.mark.parametrize("lang", ["vi", "en"])
+def test_fresh_init_is_green(repo, lang):
+    init(repo, name="Demo", level="regulated", packs=ALL_PACKS, language=lang)
     assert main(["--root", str(repo), "check", "--full"]) == 0
     assert main(["--root", str(repo), "selftest"]) == 0
 
@@ -56,3 +59,23 @@ def test_hooks_install(repo):
     init(repo, name="Demo", level="lite", packs=[])
     assert main(["--root", str(repo), "hooks", "install"]) == 0
     assert (repo / ".git/hooks/pre-push").stat().st_mode & 0o111
+
+
+@pytest.mark.parametrize("language,docs,expect", [
+    ("en", "", "Process for every slice"),
+    ("vi", "", "Quy trình mỗi lát"),
+    ("ja", "", "Process for every slice"),        # chưa có mẫu tiếng Nhật ⇒ en
+    ("ja", "vi", "Quy trình mỗi lát"),           # khai docs_language ⇒ theo khai
+])
+def test_docs_language_selection(repo, language, docs, expect):
+    init(repo, name="Demo", level="standard", packs=["fintech"], language=language, docs_language=docs)
+    assert expect in (repo / "CLAUDE.md").read_text(encoding="utf-8")
+    assert f"Communicate in `{language}`" in (repo / ".claude/agents/execution-lead.md").read_text(encoding="utf-8") \
+        or f"Giao tiếp bằng `{language}`" in (repo / ".claude/agents/execution-lead.md").read_text(encoding="utf-8")
+    toml = (repo / "gatekit.toml").read_text(encoding="utf-8")
+    assert ("SINGLE SOURCE" in toml) == ("Process for every slice" == expect)
+
+
+def test_cli_docs_language(repo):
+    assert main(["--root", str(repo), "init", "--name", "X", "--language", "en", "--level", "lite"]) == 0
+    assert "Hard architectural constraints" in (repo / "CLAUDE.md").read_text(encoding="utf-8")
