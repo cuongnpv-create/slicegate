@@ -1,13 +1,13 @@
 {
-  "name": "gatekit",
+  "name": "slicegate",
   "owner": { "name": "Nguyễn Cường", "url": "https://github.com/cuongnpv-create" },
-  "description": "gatekit — gated development process for teams of AI agents.",
+  "description": "slicegate — gated development process for teams of AI agents.",
   "plugins": [
     {
-      "name": "gatekit",
+      "name": "slicegate",
       "source": "./",
       "description": "Gated development process for teams of AI agents: slices, gates, ledgers, guards, mutation testing by risk zone.",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "category": "development",
       "tags": ["process", "quality-gates", "mutation-testing"]
     }

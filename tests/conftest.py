@@ -27,8 +27,8 @@ def commit(root: Path, msg: str, files: dict[str, str]) -> str:
 @pytest.fixture(autouse=True)
 def _reset_lang(monkeypatch):
     """Ngôn ngữ thông báo là trạng thái toàn tiến trình — mỗi test bắt đầu ở `vi`, ⛔ rò sang test sau."""
-    from gatekit import messages
-    monkeypatch.delenv("GATEKIT_LANG", raising=False)
+    from slicegate import messages
+    monkeypatch.delenv("SLICEGATE_LANG", raising=False)
     messages.set_lang("vi")
     yield
     messages.set_lang("vi")

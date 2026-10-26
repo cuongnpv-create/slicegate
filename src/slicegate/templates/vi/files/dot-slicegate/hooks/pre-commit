@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# pre-commit — slicegate. NHANH: chỉ guard FAST. fail-CLOSED: thiếu slicegate / guard ĐỎ / lỗi ⇒ chặn commit.
+# Chỉ là máy KHÁCH (`--no-verify` đi vòng được) — pre-push và CI gác lại; luật dự án ⛔ dùng --no-verify.
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+SLICEGATE_BIN="${SLICEGATE_BIN:-}"
+if command -v slicegate >/dev/null 2>&1; then GK=(slicegate)
+elif [ -n "$SLICEGATE_BIN" ] && [ -x "$SLICEGATE_BIN" ]; then GK=("$SLICEGATE_BIN")
+elif python3 -c "import slicegate" 2>/dev/null; then GK=(python3 -m slicegate)
+else echo "pre-commit: 🔴 không tìm thấy slicegate (cài pip, hoặc chạy lại `slicegate hooks install` từ plugin)"; exit 1; fi
+"${GK[@]}" check --fast || { echo "pre-commit: 🔴 slicegate check --fast ĐỎ"; exit 1; }

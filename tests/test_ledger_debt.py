@@ -4,8 +4,8 @@ import datetime as dt
 
 import pytest
 
-from gatekit.config import from_dict
-from gatekit.tools import debt, ledger
+from slicegate.config import from_dict
+from slicegate.tools import debt, ledger
 from tests.conftest import write
 
 LANES = {"ledger": {"lanes": [{"name": "core", "prefix": "P", "dir": "docs/ledger"},

@@ -1,0 +1,19 @@
+# slicegate tự gác chính nó (dogfood).
+[project]
+name = "slicegate"
+level = "lite"
+language = "vi"
+packs = []
+
+[paths]
+prod = ['^src/slicegate/']
+
+[zones.K]
+label = "máy gác bí mật"
+paths = ['^src/slicegate/guards/secret_leak\.py$']
+grep = []
+
+[zones.F]
+label = "luật quyết định của quy trình: vùng rủi ro, tỷ lệ lát, cấp số sổ"
+paths = ['^src/slicegate/tools/(risk_zone|slice_quota|ledger)\.py$', '^src/slicegate/qa/mutants\.py$']
+grep = []

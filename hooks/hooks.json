@@ -1,5 +1,5 @@
 {
-  "description": "gatekit: in tóm tắt trạng thái quy trình khi mở phiên trong dự án đã cài gatekit / print the process status at session start in projects using gatekit.",
+  "description": "slicegate: in tóm tắt trạng thái quy trình khi mở phiên trong dự án đã cài slicegate / print the process status at session start in projects using slicegate.",
   "hooks": {
     "SessionStart": [
       {

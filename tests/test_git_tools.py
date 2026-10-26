@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from gatekit.config import from_dict
-from gatekit.tools import guard_hygiene
-from gatekit.tools.risk_zone import classify
-from gatekit.tools.slice_quota import slices, violations
+from slicegate.config import from_dict
+from slicegate.tools import guard_hygiene
+from slicegate.tools.risk_zone import classify
+from slicegate.tools.slice_quota import slices, violations
 from tests.conftest import commit
 
 
@@ -67,7 +67,7 @@ def test_slice_quota_ignores_history_before_install(repo):
     commit(repo, "docs: a", {"docs/a.md": "a\n"})
     commit(repo, "docs: b", {"docs/b.md": "b\n"})
     commit(repo, "docs: c", {"docs/c.md": "c\n"})
-    commit(repo, "chore: cài gatekit [G-1]", {"gatekit.toml": "", "docs/x.md": "x\n"})
+    commit(repo, "chore: cài slicegate [G-1]", {"slicegate.toml": "", "docs/x.md": "x\n"})
     commit(repo, "feat [S-1]", {"src/a.py": "a=1\n"})
     cfg = from_dict(repo, {})
     seq = slices(cfg)

@@ -1,143 +1,143 @@
-# Bộ đột biến cho chính các guard của gatekit: gỡ một luật ⇒ selftest/pytest phải ĐỎ.
+# Bộ đột biến cho chính các guard của slicegate: gỡ một luật ⇒ selftest/pytest phải ĐỎ.
 zone = "K"
 cmd = "PYTHONPATH=src python3 -m pytest -q -x tests/test_guards.py"
 
 [[mutant]]
 id = "secret-01"
-file = "src/gatekit/guards/secret_leak.py"
+file = "src/slicegate/guards/secret_leak.py"
 find = "            if bad:\n"
 replace = "            if False:\n"
 why = "bỏ phát hiện bí mật đi vào print/log ⇒ token lọt log mà guard vẫn XANH"
 
 [[mutant]]
 id = "secret-02"
-file = "src/gatekit/guards/secret_leak.py"
+file = "src/slicegate/guards/secret_leak.py"
 find = "        if f\"{rel}:{line}\" in allow or f\"{rel}:*\" in allow:"
 replace = "        if True:"
 why = "allowlist nuốt mọi phát hiện"
 
 [[mutant]]
 id = "naming-01"
-file = "src/gatekit/guards/naming_scope.py"
+file = "src/slicegate/guards/naming_scope.py"
 find = "    return any(ord(c) > 127 for c in name)"
 replace = "    return False"
 why = "tên tiếng Việt có dấu lọt vào mã"
 
 [[mutant]]
 id = "naming-02"
-file = "src/gatekit/guards/naming_scope.py"
+file = "src/slicegate/guards/naming_scope.py"
 find = "    for key in sorted(base - seen):"
 replace = "    for key in []:"
 why = "baseline không còn co lại ⇒ thành chỗ giấu tên mới"
 
 [[mutant]]
 id = "wiring-01"
-file = "src/gatekit/guards/test_wiring.py"
+file = "src/slicegate/guards/test_wiring.py"
 find = "        if not matched(f):"
 replace = "        if False:"
 why = "test mới không nằm trong manifest mà guard không báo"
 
 [[mutant]]
 id = "migr-01"
-file = "src/gatekit/guards/migration_scope.py"
+file = "src/slicegate/guards/migration_scope.py"
 find = "        elif lock[name] != sha:"
 replace = "        elif False:"
 why = "sửa migration đã áp mà không bị bắt"
 
 [[mutant]]
 id = "money-01"
-file = "src/gatekit/guards/money_float.py"
+file = "src/slicegate/guards/money_float.py"
 find = "    return bool(ws & money) and not (ws & not_money)"
 replace = "    return False"
 why = "guard không còn nhận ra tên tiền ⇒ cột/biến tiền kiểu float lọt qua"
 
 [[mutant]]
 id = "money-02"
-file = "src/gatekit/guards/money_float.py"
+file = "src/slicegate/guards/money_float.py"
 find = "    return bool(ws & money) and not (ws & not_money)"
 replace = "    return bool(ws & money)"
 why = "bỏ danh sách loại trừ ⇒ total_weight / tax_rate bị báo nhầm, người dùng tắt guard"
 
 [[mutant]]
 id = "pci-01"
-file = "src/gatekit/guards/pci_scope.py"
+file = "src/slicegate/guards/pci_scope.py"
 find = "                if rx.fullmatch(m.group(\"col\")):"
 replace = "                if False:"
 why = "cột SQL lưu số thẻ / CVV lọt qua"
 
 [[mutant]]
 id = "tenant-01"
-file = "src/gatekit/guards/tenant_scope.py"
+file = "src/slicegate/guards/tenant_scope.py"
 find = "            if not hit or col.search(sql):"
 replace = "            if True:"
 why = "guard không còn bắt truy vấn quên lọc tenant ⇒ rò dữ liệu chéo khách thuê lọt qua"
 
 [[mutant]]
 id = "tenant-02"
-file = "src/gatekit/guards/tenant_scope.py"
+file = "src/slicegate/guards/tenant_scope.py"
 find = "            if _IGNORE.search(near):"
 replace = "            if True:"
 why = "miễn trừ nuốt mọi phát hiện"
 
 [[mutant]]
 id = "rls-01"
-file = "src/gatekit/guards/tenant_rls.py"
+file = "src/slicegate/guards/tenant_rls.py"
 find = "        if tb not in policies:"
 replace = "        if False:"
 why = "bật RLS mà không có policy vẫn XANH (RLS không policy = chặn hết hoặc bị bỏ qua bởi chủ bảng)"
 
 [[mutant]]
 id = "phi-01"
-file = "src/gatekit/guards/phi_log.py"
+file = "src/slicegate/guards/phi_log.py"
 find = "    return bool(ws & spec[0]) and not (ws & spec[1])"
 replace = "    return False"
 why = "guard không còn nhận ra tên dữ liệu sức khoẻ ⇒ chẩn đoán vào log lọt qua"
 
 [[mutant]]
 id = "phi-02"
-file = "src/gatekit/guards/phi_log.py"
+file = "src/slicegate/guards/phi_log.py"
 find = "        return [node.slice.value]   # record[\"diagnosis\"]"
 replace = "        return []"
 why = "PHI lấy bằng khoá dict (record['medication']) lọt qua"
 
 [[mutant]]
 id = "phi-03"
-file = "src/gatekit/guards/phi_log.py"
+file = "src/slicegate/guards/phi_log.py"
 find = "    if isinstance(node, ast.Attribute):\n        return [node.attr]"
 replace = "    if isinstance(node, ast.Attribute):\n        return [node.attr] + _names(node.value)"
 why = "tính cả biến gốc ⇒ patient.id bị báo nhầm, người dùng tắt guard"
 
 [[mutant]]
 id = "phi-tag-01"
-file = "src/gatekit/guards/phi_tag.py"
+file = "src/slicegate/guards/phi_tag.py"
 find = "            if is_phi(spec, m.group(\"col\")) and not _TAG.search(line):"
 replace = "            if False:"
 why = "cột dữ liệu sức khoẻ mới vào DB không qua rà soát"
 
 [[mutant]]
 id = "unit-01"
-file = "src/gatekit/guards/unit_suffix.py"
+file = "src/slicegate/guards/unit_suffix.py"
 find = "    return bool(ws & quantity) and not (ws & not_quantity) and not (ws & units)"
 replace = "    return False"
 why = "guard không còn nhận ra đại lượng thiếu đơn vị ⇒ weight = 12 (kg hay lb?) lọt qua"
 
 [[mutant]]
 id = "unit-02"
-file = "src/gatekit/guards/unit_suffix.py"
+file = "src/slicegate/guards/unit_suffix.py"
 find = "    return isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == \"len\""
 replace = "    return False"
 why = "height = len(rows) bị báo nhầm là kích thước ⇒ người dùng tắt guard"
 
 [[mutant]]
 id = "time-01"
-file = "src/gatekit/guards/naive_time.py"
+file = "src/slicegate/guards/naive_time.py"
 find = "            if \"tz\" not in kws and (pos is None or len(node.args) <= pos):"
 replace = "            if False:"
 why = "datetime.now() không múi giờ lọt qua ⇒ giờ cắt so theo giờ máy chủ"
 
 [[mutant]]
 id = "time-02"
-file = "src/gatekit/guards/naive_time.py"
+file = "src/slicegate/guards/naive_time.py"
 find = "(?!\\s*(?:\\(\\d\\)\\s*)?with\\s+time\\s+zone)"
 replace = ""
 why = "cột timestamptz bị báo nhầm là ngây thơ ⇒ người dùng tắt guard"

@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from gatekit.scaffold import TEMPLATE_LANGS
+from slicegate.scaffold import TEMPLATE_LANGS
 
-ROOT = Path(str(resources.files("gatekit")))
+ROOT = Path(str(resources.files("slicegate")))
 TOKEN = re.compile(r"\{\{[^}]+\}\}")
 
 

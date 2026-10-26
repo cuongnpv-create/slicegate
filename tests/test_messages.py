@@ -10,9 +10,9 @@ import string
 
 import pytest
 
-from gatekit import messages
-from gatekit.cli import main
-from gatekit.scaffold import init
+from slicegate import messages
+from slicegate.cli import main
+from slicegate.scaffold import init
 
 VIET = re.compile(r"[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", re.I)
 
@@ -37,11 +37,11 @@ def test_en_has_no_vietnamese():
 
 
 def test_lang_resolution(tmp_path, monkeypatch):
-    from gatekit.config import from_dict
+    from slicegate.config import from_dict
     assert messages.lang_for(from_dict(tmp_path, {"project": {"language": "en"}})) == "en"
     assert messages.lang_for(from_dict(tmp_path, {"project": {"language": "ja"}})) == "en"
     assert messages.lang_for(from_dict(tmp_path, {"project": {"language": "ja", "docs_language": "vi"}})) == "vi"
-    monkeypatch.setenv("GATEKIT_LANG", "vi")
+    monkeypatch.setenv("SLICEGATE_LANG", "vi")
     assert messages.lang_for(from_dict(tmp_path, {"project": {"language": "en"}})) == "vi"
 
 
@@ -67,6 +67,6 @@ def test_cli_init_message_follows_flag(repo, capsys):
 
 def test_env_override(repo, capsys, monkeypatch):
     init(repo, name="Acme", level="lite", packs=[], language="en")
-    monkeypatch.setenv("GATEKIT_LANG", "vi")
+    monkeypatch.setenv("SLICEGATE_LANG", "vi")
     main(["--root", str(repo), "report", "--brief"])
     assert "điều kiện OPEN" in capsys.readouterr().out
