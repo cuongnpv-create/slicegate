@@ -165,6 +165,13 @@ tests/                 pytest
 mutants/               bộ đột biến của chính slicegate
 ```
 
+## Phát hành
+
+Tăng phiên bản ở `pyproject.toml`, `.claude-plugin/plugin.json` và `.claude-plugin/marketplace.json` (workflow chặn nếu
+lệch), gộp vào `main`, rồi chọn một trong hai: tạo GitHub Release với tag `vX.Y.Z`, hoặc chạy **Actions → release → Run
+workflow** trên `main` và nhập phiên bản. Cả hai đường đều test, đóng gói, đẩy lên PyPI qua trusted publishing và đính gói
+vào GitHub Release.
+
 ## Lộ trình
 
 - Thêm gói: `mobile`.

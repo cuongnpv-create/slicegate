@@ -191,6 +191,13 @@ tests/                 pytest
 mutants/               slicegate's own mutant suites
 ```
 
+## Releasing
+
+Bump the version in `pyproject.toml`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (the workflow
+refuses a mismatch), merge to `main`, then either publish a GitHub Release with tag `vX.Y.Z`, or run
+**Actions → release → Run workflow** on `main` with the version. Both paths test, build, publish to PyPI through trusted
+publishing and attach the packages to the GitHub Release.
+
 ## Roadmap
 
 - More packs: `mobile`.
